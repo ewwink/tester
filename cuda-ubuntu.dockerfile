@@ -8,7 +8,7 @@ ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES compute,utility,video
 
 RUN apt-get update && \
-    apt-get git build-essential yasm zip libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev -y \
+    apt-get git build-essential yasm zip libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev -y &&\
     # clean
     apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
 
