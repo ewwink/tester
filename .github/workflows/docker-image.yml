@@ -19,12 +19,12 @@ jobs:
         id: cuda_ubuntu_pull
         run: |
           docker pull nvidia/cuda:12.3.2-devel-ubuntu20.04
-          docker pull ubuntu:20.04
+          # docker pull ubuntu:20.04
       - name: run if cuda_ubuntu_pull failed
         if: failure() && steps.cuda_ubuntu_pull.outcome == 'failure'
         run: |
           docker pull nvidia/cuda:12.3.2-devel-ubuntu20.04
-          docker pull ubuntu:20.04
+          # docker pull ubuntu:20.04
       - name: build ffmpeg
         run: |
           docker build -t ffmpeg:cuda-ubuntu -f cuda-ubuntu.dockerfile .
