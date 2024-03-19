@@ -8,9 +8,18 @@ ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES compute,utility,video
 
 RUN mkdir -p /app/workspace && apt-get -qq update && \
-    apt-get -y -qq install git build-essential yasm pkg-config cmake zip libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev libdav1d-dev libgnutls28-dev && \
+    apt-get -y -qq install git build-essential yasm pkg-config cmake zip libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev libdav1d-dev libgnutls28-dev \
+        python3-pip meson && \ 
     # clean
     apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
+
+RUN cd ~/ffmpeg_sources && \
+    git -C dav1d pull 2> /dev/null || git clone --depth 1 https://code.videolan.org/videolan/dav1d.git && \
+    mkdir -p dav1d/build && \
+    cd dav1d/build && \
+    meson setup -Denable_tools=false -Denable_tests=false --default-library=static .. --prefix "$HOME/ffmpeg_build" --libdir="$HOME/ffmpeg_build/lib" && \
+    ninja && \
+    ninja install
 
 RUN cd ~/ffmpeg_sources && \
     git -C aom pull 2> /dev/null || git clone --depth 1 https://aomedia.googlesource.com/aom && \
