@@ -7,6 +7,7 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES compute,utility,video
 
+RUN echo $(pwd)
 RUN apt-get -qq update && \
     apt-get -qq install git build-essential yasm pkg-config cmake zip libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev -y && \
     # clean
