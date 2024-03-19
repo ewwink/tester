@@ -11,7 +11,7 @@ WORKDIR /app
 COPY ./copyfiles.sh /app/copyfiles.sh
 
 RUN mkdir -p /app/workspace && apt-get -qq update && \
-    apt-get -y -qq install git build-essential nasm yasm pkg-config cmake zip libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev libgnutls28-dev \
+    apt-get -y -qq install git build-essential gcc-12 g++-12 nasm yasm pkg-config cmake zip libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev libgnutls28-dev \
         python3-pip meson && \ 
     # clean
     apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
@@ -29,7 +29,7 @@ RUN cd /app/ffmpeg_sources && \
     mkdir -p aom_build && \
     cd aom_build && \
     PATH="$HOME/bin:$PATH" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$HOME/ffmpeg_build" -DENABLE_TESTS=OFF -DENABLE_NASM=on ../aom && \
-    PATH="$HOME/bin:$PATH" make && \
+    PATH="$HOME/bin:$PATH" make V=0 -s -j $(nproc) && \
     make install
     
 
