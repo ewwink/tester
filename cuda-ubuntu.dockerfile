@@ -8,11 +8,11 @@ ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES compute,utility,video
 
 RUN apt-get update && \
-    apt-get git build-essential yasm zip libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev -y &&\
+    git build-essential yasm zip libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev -y && \
     # clean
     apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
 
-#WORKDIR /app
+WORKDIR /app
 
 RUN git clone https://git.videolan.org/git/ffmpeg/nv-codec-headers.git /code/nv-codec-headers && \
     cd /code/nv-codec-headers && make install && \
@@ -25,6 +25,7 @@ RUN cd /code/ffmpeg && \
 RUN apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
 
 RUN mkdir -p /app/ffmpeg-cuda/lib
+
 # Copy libnpp
 COPY --from=build /usr/local/cuda-12.3/targets/x86_64-linux/lib/libnppc.so /app/ffmpeg-cuda/liblibnppc.so.12
 COPY --from=build /usr/local/cuda-12.3/targets/x86_64-linux/lib/libnppig.so /app/ffmpeg-cuda/liblibnppig.so.12
@@ -40,9 +41,9 @@ COPY --from=build /app/workspace/bin/ffplay /app/ffmpeg-cuda/ffplay
 RUN cd /app/ffmpeg-cuda && zip -r ffmpeg-cuda.zip .
 
 # Check shared library
-RUN ldd /usr/bin/ffmpeg
-RUN ldd /usr/bin/ffprobe
-RUN ldd /usr/bin/ffplay
+RUN ldd /app/ffmpeg-cuda/ffmpeg
+RUN ldd /app/ffmpeg-cuda/ffprobe
+RUN ldd /app/ffmpeg-cuda/ffplay
 
 CMD         ["--help"]
 ENTRYPOINT  ["/usr/bin/ffmpeg"]
