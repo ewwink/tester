@@ -2,7 +2,7 @@
 	"name": "Tester image",
 
 	// Update the 'image' property with your Docker image name.
-	"image": "nvidia/cuda:12.3.2-devel-ubuntu20.04",
+	"image": "https://hub.docker.com/layers/nvidia/cuda/12.3.2-devel-ubuntu20.04/images/sha256-ff559a6bffe80bd127cc732c30790136c7ea924c4f2c682911c1c0f8c255e8e1",
 
 	// Set *default* container specific settings.json values on container create.
 	"settings": {},
