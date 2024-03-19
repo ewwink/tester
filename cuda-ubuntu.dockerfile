@@ -26,9 +26,11 @@ RUN cd /code/ffmpeg && \
     --disable-debug --disable-doc && \
     echo "make ffmpeg..." && \
     make V=0 -s -j 8 && \
-    ls /app/workspace && \
     echo "make install ffmpeg..." && \
-    make install
+    make install && \
+    echo "Listing directory:" \
+    ls -l /app/workspace && \
+    ls -l /app/workspace/lib
 
 RUN apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
 

@@ -9,8 +9,8 @@ echo " Archive File and Copying Dynamics Libs"
 
 ## ffmpeg archive 
 mkdir -p /app/ffmpeg/lib
-cp /app/workspace/bin/ffmpeg /app/ffmpeg
-cp /app/workspace/bin/ffprobe /app/ffmpeg
+cp /app/workspace/bin/ffmpeg /app/ffmpeg/
+cp /app/workspace/bin/ffprobe /app/ffmpeg/
 cp /app/workspace/bin/ffplay /app/ffmpeg/
 cp /usr/local/cuda-12.3/targets/x86_64-linux/lib/libnppc.so /app/ffmpeg/lib/libnppc.so.12
 cp /usr/local/cuda-12.3/targets/x86_64-linux/lib/libnppig.so /app/ffmpeg/lib/libnppig.so.12
