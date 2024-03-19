@@ -28,7 +28,7 @@ RUN cd /code/ffmpeg && \
     make V=0 -s -j 8 && \
     echo "make install ffmpeg..." && \
     make install && \
-    echo "Listing directory:" \
+    echo "Listing directory:" && \
     ls -l /app/workspace && \
     ls -l /app/workspace/lib
 
