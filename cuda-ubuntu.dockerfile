@@ -31,7 +31,7 @@ RUN cd /code/ffmpeg && \
 
 RUN apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
 
-COPY /app/workspace/bin/ffmpeg /usr/bin/ffmpeg
+RUN cp /app/workspace/bin/ffmpeg /usr/bin/ffmpeg
 # Copy ffmpeg
 RUN which ffmpeg
 
