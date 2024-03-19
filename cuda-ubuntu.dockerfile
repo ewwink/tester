@@ -29,4 +29,4 @@ RUN apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/
 RUN which ffmpeg
 
 CMD         ["--help"]
-ENTRYPOINT  ["/usr/bin/ffmpeg"]
+ENTRYPOINT  ["/usr/local/bin/ffmpeg"]
