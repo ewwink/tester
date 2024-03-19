@@ -14,12 +14,6 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-FROM ubuntu:${UBUNTUVER} AS release
-
-ENV DEBIAN_FRONTEND noninteractive
-ENV NVIDIA_VISIBLE_DEVICES all
-ENV NVIDIA_DRIVER_CAPABILITIES compute,utility,video
-
 RUN git clone https://git.videolan.org/git/ffmpeg/nv-codec-headers.git /code/nv-codec-headers && \
     cd /code/nv-codec-headers && make install && \
     git clone https://git.ffmpeg.org/ffmpeg.git /code/ffmpeg
