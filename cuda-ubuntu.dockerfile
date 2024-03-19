@@ -26,7 +26,7 @@ RUN cd /code/ffmpeg && \
 RUN apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
 
 # Copy ffmpeg
-COPY --from=buildFFmpeg /app/workspace/bin/ffmpeg /usr/bin/ffmpeg
+COPY /app/workspace/bin/ffmpeg /usr/bin/ffmpeg
 
 CMD         ["--help"]
 ENTRYPOINT  ["/usr/bin/ffmpeg"]
