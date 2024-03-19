@@ -1,18 +1,33 @@
-name: Docker Image CI
+name: build test
 
 on:
   push:
-    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
   pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
 
 jobs:
-
-  build:
-
-    runs-on: ubuntu-latest
-
+  build-cuda-ubuntu-docker:
+    name: build in ubuntu docker with cuda
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v3
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: pull base image
+        id: cuda_ubuntu_pull
+        run: |
+          docker pull nvidia/cuda:12.3.2-devel-ubuntu20.04
+          docker pull ubuntu:20.04
+      - name: run if cuda_ubuntu_pull failed
+        if: failure() && steps.cuda_ubuntu_pull.outcome == 'failure'
+        run: |
+          docker pull nvidia/cuda:12.3.2-devel-ubuntu20.04
+          docker pull ubuntu:20.04
+      - name: build ffmpeg
+        run: |
+          docker build -t ffmpeg:cuda-ubuntu -f cuda-ubuntu.dockerfile .
+      - name: test run ffmepg
+        run: |
+          docker run --rm ffmpeg:cuda-ubuntu -buildconf
