@@ -24,8 +24,8 @@ RUN cd /code/ffmpeg && \
     ./configure --quiet --enable-nonfree --enable-cuda-nvcc --enable-libnpp --extra-cflags=-I/usr/local/cuda/include \
     --extra-ldflags=-L/usr/local/cuda/lib64 --disable-static --enable-shared  --prefix=/app/workspace --libdir=/lib/x86_64-linux-gnu/ \
     --disable-debug --disable-doc && \
-    echo "make ffmpeg..." && \
-    make V=0 -s -j 8 && \
+    echo "make ffmpeg... $(nproc)" && \
+    make V=0 -s -j $(nproc) && \
     echo "make install ffmpeg..." && \
     make install && \
     echo "Listing directory:" && \
