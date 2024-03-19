@@ -24,10 +24,8 @@ RUN cd /code/ffmpeg && \
     ./configure --quiet --enable-nonfree --enable-cuda-nvcc --enable-libnpp --extra-cflags=-I/usr/local/cuda/include \
     --extra-ldflags=-L/usr/local/cuda/lib64 --disable-static --enable-shared  --prefix=/app/workspace \
     --disable-debug --disable-doc && \
-    echo "make ffmpeg..." && \
     make -s -j 8 && \
     ls /app/workspace && \
-    echo "make install ffmpeg..." && \
     make install
 
 RUN apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
