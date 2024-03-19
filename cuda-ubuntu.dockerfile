@@ -34,7 +34,7 @@ RUN apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/
 
 RUN cp /app/workspace/bin/ffmpeg /usr/bin/ffmpeg
 # Copy ffmpeg
-RUN which ffmpeg
+RUN ldd /usr/bin/ffmpeg
 
 CMD         ["--help"]
 ENTRYPOINT  ["/usr/bin/ffmpeg"]
