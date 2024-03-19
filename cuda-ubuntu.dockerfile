@@ -1,7 +1,7 @@
 ARG CUDAVER=12.3.2
 ARG UBUNTUVER=20.04
 
-FROM nvidia/cuda:${CUDAVER}-devel-ubuntu${UBUNTUVER} AS build
+FROM nvidia/cuda:${CUDAVER}-devel-ubuntu${UBUNTUVER} AS buildFFmpeg
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV NVIDIA_VISIBLE_DEVICES all
@@ -27,16 +27,16 @@ RUN apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/
 RUN mkdir -p /app/ffmpeg-cuda/lib
 
 # Copy libnpp
-COPY --from=build /usr/local/cuda-12.3/targets/x86_64-linux/lib/libnppc.so /app/ffmpeg-cuda/liblibnppc.so.12
-COPY --from=build /usr/local/cuda-12.3/targets/x86_64-linux/lib/libnppig.so /app/ffmpeg-cuda/liblibnppig.so.12
-COPY --from=build /usr/local/cuda-12.3/targets/x86_64-linux/lib/libnppicc.so /app/ffmpeg-cuda/liblibnppicc.so.12
-COPY --from=build /usr/local/cuda-12.3/targets/x86_64-linux/lib/libnppidei.so /app/ffmpeg-cuda/liblibnppidei.so.12
-COPY --from=build /usr/local/cuda-12.3/targets/x86_64-linux/lib/libnppif.so /app/ffmpeg-cuda/lib/libnppif.so.12
+COPY --from=buildFFmpeg /usr/local/cuda-12.3/targets/x86_64-linux/lib/libnppc.so /app/ffmpeg-cuda/liblibnppc.so.12
+COPY --from=buildFFmpeg /usr/local/cuda-12.3/targets/x86_64-linux/lib/libnppig.so /app/ffmpeg-cuda/liblibnppig.so.12
+COPY --from=buildFFmpeg /usr/local/cuda-12.3/targets/x86_64-linux/lib/libnppicc.so /app/ffmpeg-cuda/liblibnppicc.so.12
+COPY --from=buildFFmpeg /usr/local/cuda-12.3/targets/x86_64-linux/lib/libnppidei.so /app/ffmpeg-cuda/liblibnppidei.so.12
+COPY --from=buildFFmpeg /usr/local/cuda-12.3/targets/x86_64-linux/lib/libnppif.so /app/ffmpeg-cuda/lib/libnppif.so.12
 
 # Copy ffmpeg
-COPY --from=build /app/workspace/bin/ffmpeg /app/ffmpeg-cuda/ffmpeg
-COPY --from=build /app/workspace/bin/ffprobe /app/ffmpeg-cuda/ffprobe
-COPY --from=build /app/workspace/bin/ffplay /app/ffmpeg-cuda/ffplay
+COPY --from=buildFFmpeg /app/workspace/bin/ffmpeg /app/ffmpeg-cuda/ffmpeg
+COPY --from=buildFFmpeg /app/workspace/bin/ffprobe /app/ffmpeg-cuda/ffprobe
+COPY --from=buildFFmpeg /app/workspace/bin/ffplay /app/ffmpeg-cuda/ffplay
 
 RUN cd /app/ffmpeg-cuda && zip -r ffmpeg-cuda.zip .
 
