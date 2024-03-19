@@ -2,7 +2,7 @@
 	"name": "Tester image",
 
 	// Update the 'image' property with your Docker image name.
-	"image": "https://hub.docker.com/layers/nvidia/cuda/12.3.2-devel-ubuntu20.04/images/sha256-ff559a6bffe80bd127cc732c30790136c7ea924c4f2c682911c1c0f8c255e8e1",
+	"image": "nvidia/cuda:12.3.2-devel-ubuntu20.04",
 
 	// Set *default* container specific settings.json values on container create.
 	"settings": {},
@@ -23,5 +23,5 @@
 	// "runArgs": [ "--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined" ],
 
 	// Comment out to connect as root instead. To add a non-root user, see: https://aka.ms/vscode-remote/containers/non-root.
-	"remoteUser": "vscode"
+	//"remoteUser": "vscode"
 }
