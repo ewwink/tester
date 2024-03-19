@@ -11,7 +11,7 @@ WORKDIR /app
 COPY ./copyfiles.sh /app/copyfiles.sh
 
 RUN mkdir -p /app/workspace && apt-get -qq update && \
-    apt-get -y -qq install git build-essential gcc-12 g++-12 nasm yasm pkg-config cmake zip libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev libgnutls28-dev \
+    apt-get -y -qq install git build-essential gcc-11 g++-11 nasm yasm pkg-config cmake zip libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev libgnutls28-dev \
         python3-pip meson && \ 
     # clean
     apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
