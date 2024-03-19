@@ -14,15 +14,16 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-RUN git clone https://git.videolan.org/git/ffmpeg/nv-codec-headers.git /code/nv-codec-headers && \
-    cd /code/nv-codec-headers && make install && cd – &7 \
-    git clone https://git.ffmpeg.org/ffmpeg.git /code/ffmpeg
-
 FROM ubuntu:${UBUNTUVER} AS release
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES compute,utility,video
+
+RUN git clone https://git.videolan.org/git/ffmpeg/nv-codec-headers.git /code/nv-codec-headers && \
+    cd /code/nv-codec-headers && make install && \
+    git clone https://git.ffmpeg.org/ffmpeg.git /code/ffmpeg
+
 
 RUN cd /code/ffmpeg && \
     ./configure --enable-nonfree --enable-cuda-nvcc --enable-libnpp --extra-cflags=-I/usr/local/cuda/include --extra-ldflags=-L/usr/local/cuda/lib64 --disable-static --enable-shared
