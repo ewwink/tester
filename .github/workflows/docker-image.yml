@@ -14,7 +14,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+      - name: Set Envs
+        run: |
+          echo "FFMPEG_VERSION=6.1" >> $GITHUB_ENV
       - name: pull base image
         id: cuda_ubuntu_pull
         run: |
@@ -31,3 +33,14 @@ jobs:
       - name: test run ffmepg
         run: |
           docker run --rm ffmpeg:cuda-ubuntu -buildconf
+      - name: copy build
+        run: |
+          docker run --rm  -v ${{ github.workspace }}/artifacts:/app/artifacts \
+            -e ffmpeg:cuda-ubuntu bash copyfiles.sh
+          sudo chmod -R 777 ${{ github.workspace }}/artifacts/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ffmpeg
+          path: artifacts/*
