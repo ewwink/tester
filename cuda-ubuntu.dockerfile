@@ -13,6 +13,7 @@ RUN mkdir -p /app/workspace && apt-get -qq update && \
     apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
 
 WORKDIR /app
+COPY ./copyfiles.sh /app/copyfiles.sh
 
 RUN git clone https://git.videolan.org/git/ffmpeg/nv-codec-headers.git /code/nv-codec-headers && \
     cd /code/nv-codec-headers && make install && \
@@ -21,10 +22,24 @@ RUN git clone https://git.videolan.org/git/ffmpeg/nv-codec-headers.git /code/nv-
 
 RUN cd /code/ffmpeg && \
     echo "Configuring ffmpeg..." && \
-    ./configure --quiet --enable-nonfree --enable-cuda-nvcc --enable-libnpp --extra-cflags=-I/usr/local/cuda/include \
-    --extra-ldflags=-L/usr/local/cuda/lib64 --disable-static --enable-shared  --prefix=/app/workspace --libdir=/lib/x86_64-linux-gnu/ \
-    --disable-debug --disable-doc && \
-    echo "make ffmpeg... $(nproc)" && \
+    ./configure --quiet --extra-cflags=-I/usr/local/cuda/include --extra-ldflags=-L/usr/local/cuda/lib64 \
+    --enable-nonfree --enable-cuda-nvcc --enable-libnpp --disable-static --enable-shared  --prefix=/app/workspace --libdir=/lib/x86_64-linux-gnu/ \
+    --disable-debug --disable-doc --enable-gpl  --enable-gnutls \
+    --enable-libaom \
+    --enable-libass \
+    --enable-libfdk-aac \
+    --enable-libfreetype \
+    --enable-libmp3lame \
+    --enable-libopus \
+    --enable-libvorbis \
+    --enable-libvpx \
+    --enable-libx264 \
+    --enable-libsrt \
+    --enable-libwebp \
+    --enable-mediafoundation \
+    --enable-libxvid \
+    --enable-libx265 && \
+    echo "make ffmpeg... $(nproc) core" && \
     make V=0 -s -j $(nproc) && \
     echo "make install ffmpeg..." && \
     make install && \
