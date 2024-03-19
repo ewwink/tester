@@ -7,13 +7,16 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES compute,utility,video
 
+WORKDIR /app
+COPY ./copyfiles.sh /app/copyfiles.sh
+
 RUN mkdir -p /app/workspace && apt-get -qq update && \
-    apt-get -y -qq install git build-essential yasm pkg-config cmake zip libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev libdav1d-dev libgnutls28-dev \
+    apt-get -y -qq install git build-essential yasm pkg-config cmake zip libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev libgnutls28-dev \
         python3-pip meson && \ 
     # clean
     apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
 
-RUN cd ~/ffmpeg_sources && \
+RUN mkdir -p /app/ffmpeg_sources && cd /app/ffmpeg_sources && \
     git -C dav1d pull 2> /dev/null || git clone --depth 1 https://code.videolan.org/videolan/dav1d.git && \
     mkdir -p dav1d/build && \
     cd dav1d/build && \
@@ -21,7 +24,7 @@ RUN cd ~/ffmpeg_sources && \
     ninja && \
     ninja install
 
-RUN cd ~/ffmpeg_sources && \
+RUN cd /app/ffmpeg_sources && \
     git -C aom pull 2> /dev/null || git clone --depth 1 https://aomedia.googlesource.com/aom && \
     mkdir -p aom_build && \
     cd aom_build && \
@@ -29,8 +32,7 @@ RUN cd ~/ffmpeg_sources && \
     PATH="$HOME/bin:$PATH" make && \
     make install
     
-WORKDIR /app
-COPY ./copyfiles.sh /app/copyfiles.sh
+
 
 RUN git clone https://git.videolan.org/git/ffmpeg/nv-codec-headers.git /code/nv-codec-headers && \
     cd /code/nv-codec-headers && make install && \
