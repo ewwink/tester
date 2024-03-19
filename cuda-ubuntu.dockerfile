@@ -8,7 +8,7 @@ ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES compute,utility,video
 
 RUN mkdir -p /app/workspace && apt-get -qq update && \
-    apt-get -qq install git build-essential yasm pkg-config cmake zip libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev -y && \
+    apt-get -y -qq install git build-essential yasm pkg-config cmake zip libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev &> /dev/null && \
     # clean
     apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
 
@@ -23,7 +23,7 @@ RUN cd /code/ffmpeg && \
     echo "Configuring ffmpeg..." && \
     ./configure --quiet --enable-nonfree --enable-cuda-nvcc --enable-libnpp --extra-cflags=-I/usr/local/cuda/include \
     --extra-ldflags=-L/usr/local/cuda/lib64 --disable-static --enable-shared  --prefix=/app/workspace \
-    --disable-debug --disable-doc && \
+    --disable-debug --disable-doc &> /dev/null && \
     echo "make ffmpeg..." && \
     make -s -j 8 && \
     ls /app/workspace && \
@@ -34,8 +34,8 @@ RUN apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/
 
 RUN cp /app/workspace/bin/ffmpeg /usr/bin/ffmpeg
 # Copy ffmpeg
-RUN ldd /app/workspace/bin/ffmpeg
+
 RUN ldd /usr/bin/ffmpeg
 
-#CMD         ["--help"]
-#ENTRYPOINT  ["/usr/bin/ffmpeg"]
+CMD         ["--help"]
+ENTRYPOINT  ["/usr/bin/ffmpeg"]
