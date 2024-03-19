@@ -12,7 +12,7 @@ RUN apt-get update && \
     # clean
     apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
 
-WORKDIR /app
+#WORKDIR /app
 
 RUN git clone https://git.videolan.org/git/ffmpeg/nv-codec-headers.git /code/nv-codec-headers && \
     cd /code/nv-codec-headers && make install && \
