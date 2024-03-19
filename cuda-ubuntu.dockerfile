@@ -8,10 +8,18 @@ ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES compute,utility,video
 
 RUN mkdir -p /app/workspace && apt-get -qq update && \
-    apt-get -y -qq install git build-essential yasm pkg-config cmake zip libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev > /dev/null && \
+    apt-get -y -qq install git build-essential yasm pkg-config cmake zip libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev libdav1d-dev libgnutls28-dev && \
     # clean
     apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
 
+RUN cd ~/ffmpeg_sources && \
+    git -C aom pull 2> /dev/null || git clone --depth 1 https://aomedia.googlesource.com/aom && \
+    mkdir -p aom_build && \
+    cd aom_build && \
+    PATH="$HOME/bin:$PATH" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$HOME/ffmpeg_build" -DENABLE_TESTS=OFF -DENABLE_NASM=on ../aom && \
+    PATH="$HOME/bin:$PATH" make && \
+    make install
+    
 WORKDIR /app
 COPY ./copyfiles.sh /app/copyfiles.sh
 
@@ -24,7 +32,7 @@ RUN cd /code/ffmpeg && \
     echo "Configuring ffmpeg..." && \
     ./configure --quiet --extra-cflags=-I/usr/local/cuda/include --extra-ldflags=-L/usr/local/cuda/lib64 \
     --enable-nonfree --enable-cuda-nvcc --enable-libnpp --disable-static --enable-shared  --prefix=/app/workspace --libdir=/lib/x86_64-linux-gnu/ \
-    --disable-debug --disable-doc --enable-gpl  --enable-gnutls \
+    --disable-debug --disable-doc --enable-gpl --enable-gnutls \
     --enable-libaom \
     --enable-libass \
     --enable-libfdk-aac \
@@ -38,6 +46,7 @@ RUN cd /code/ffmpeg && \
     --enable-libwebp \
     --enable-mediafoundation \
     --enable-libxvid \
+    --enable-libdav1d \
     --enable-libx265 && \
     echo "make ffmpeg... $(nproc) core" && \
     make V=0 -s -j $(nproc) && \
