@@ -23,7 +23,7 @@ RUN git clone https://git.videolan.org/git/ffmpeg/nv-codec-headers.git /code/nv-
 
 
 RUN cd /code/ffmpeg && \
-    ./configure --enable-nonfree --enable-cuda-nvcc --enable-libnpp --extra-cflags=-I/usr/local/cuda/include \
+    ./configure  --enable-silent-rules --enable-nonfree --enable-cuda-nvcc --enable-libnpp --extra-cflags=-I/usr/local/cuda/include \
     --extra-ldflags=-L/usr/local/cuda/lib64 --disable-static --enable-shared  --prefix="${WORKSPACE}" \
     --disable-debug --disable-doc && \
     make -s -j 8 && \
@@ -31,8 +31,9 @@ RUN cd /code/ffmpeg && \
 
 RUN apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
 
+COPY --from=buildFFmpeg /app/workspace/bin/ffmpeg /usr/bin/ffmpeg
 # Copy ffmpeg
 RUN which ffmpeg
 
 CMD         ["--help"]
-ENTRYPOINT  ["/usr/local/bin/ffmpeg"]
+ENTRYPOINT  ["/usr/bin/ffmpeg"]
