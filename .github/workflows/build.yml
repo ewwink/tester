@@ -29,7 +29,7 @@ jobs:
           docker run --rm dummy:v1 dummy.sh
       - name: copy build
         run: |
-          docker cp $(docker create --name copyOutput nano:test):/app/dummy.zip artifacts && docker rm copyOutput
+          docker cp $(docker create --name copyOutput dummy:v1):/app/dummy.zip artifacts && docker rm copyOutput
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
