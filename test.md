@@ -7,7 +7,12 @@ docker run --rm  ubuntu_dev:20.04
 docker run --rm --entrypoint node titasik/ubuntu_dev:20.04 --version
 
 # -it interactive 
-docker run -it--entrypoint bash titasik/ubuntu_dev:20.04 
+docker run -it  ubuntu:20.04
+docker run -it --entrypoint bash titasik/ubuntu_dev:20.04 
+
+# login to exiting container
+start -a -i <container-id>
+start -a -i f108912d2ce1
 
 # exit clean
 docker rm -v -f $(docker ps -qa)
@@ -25,3 +30,14 @@ apt-get clean;  apt autoremove; apt autoclean; rm -rf /var/lib/apt/lists/* /tmp/
 
 # copy file from container to host
 docker cp $(docker create --name copyOutput nano:test):/usr/local/bin/nano ./ && docker rm copyOutput
+
+# clear files
+docker stop $(docker ps -q)
+docker rm $(docker ps -a -q)
+
+docker container prune -f
+docker image prune -f
+docker buildx prune -f
+
+
+
