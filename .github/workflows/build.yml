@@ -21,13 +21,14 @@ jobs:
         id: ubuntu2004_pull
         run: |
           docker pull ubuntu:20.04
-      - name: create file
+      - name: build dummy image
         run: |
           docker build -t dummy:v1 -f dummy.dockerfile .
-      - name: test run ffmepg
+      - name: create zip
         run: |
           docker run --rm dummy:v1 dummy.sh
-      - name: copy build
+          ls -l
+      - name: copy zip test
         run: |
           docker cp $(docker create --name copyOutput dummy:v1):/app/dummy.zip artifacts && docker rm copyOutput
 
