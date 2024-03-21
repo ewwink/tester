@@ -3,7 +3,7 @@ FROM ubuntu:20.04
 WORKDIR /app
 COPY dummy.sh .
 
-RUN apt-get update && apt-get intall zip -y
+RUN apt-get update && apt-get install zip -y
 RUN /bin/bash dummy.sh
 
 CMD         ["-h"]
