@@ -26,6 +26,7 @@ jobs:
           docker build -t dummy:v1 -f dummy.dockerfile .
       - name: create zip
         run: |
+          docker run --rm dummy:v1
           docker run --rm dummy:v1 dummy.sh
       - name: copy all
         run: |
@@ -36,5 +37,5 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: outdir.zip
-          path: outdir/*
+          name: outdir
+          path: outdir/
