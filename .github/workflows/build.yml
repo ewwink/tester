@@ -27,13 +27,13 @@ jobs:
       - name: create zip
         run: |
           docker run --rm dummy:v1 dummy.sh
-          ls -l
       - name: copy zip test
         run: |
           docker cp $(docker create --name copyOutput dummy:v1):/app/dummy.zip artifacts && docker rm copyOutput
+          ls -l
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
           name: dummy
-          path: artifacts/*
+          path: dummy.zip
