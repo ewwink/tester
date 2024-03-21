@@ -20,7 +20,7 @@ jobs:
       - name: pull base image
         id: ubuntu2004_pull
         run: |
-          docker ubuntu:20.04
+          docker pull ubuntu:20.04
       - name: create file
         run: |
           docker build -t dummy:v1 -f dummy.dockerfile .
