@@ -1,0 +1,38 @@
+name: build test
+
+on:
+  push:
+    paths-ignore:
+      - '*.md'
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-cuda-ubuntu-docker:
+    name: build in ubuntu docker with cuda
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set Envs
+        run: |
+          echo "FFMPEG_VERSION=6.1" >> $GITHUB_ENV
+      - name: pull base image
+        id: ubuntu2004_pull
+        run: |
+          docker ubuntu:20.04
+      - name: create file
+        run: |
+          docker build -t dummy:v1 -f dummy.dockerfile .
+      - name: test run ffmepg
+        run: |
+          docker run --rm dummy:v1 dummy.sh
+      - name: copy build
+        run: |
+          docker cp $(docker create --name copyOutput nano:test):/app/dummy.zip artifacts && docker rm copyOutput
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dummy
+          path: artifacts/*
