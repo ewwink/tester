@@ -2,25 +2,31 @@ docker pull ubuntu:20.04
 docker build -t nano:test -f test.dockerfile .
 
 docker build -t ubuntu_dev:20.04 -f ubuntu_dev.dockerfile .
+
 # --rm auto exit delete
 docker run --rm  ubuntu_dev:20.04
+
 docker run --rm --entrypoint node titasik/ubuntu_dev:20.04 --version
 
 # -it interactive 
 docker run -it  ubuntu:20.04
+
 docker run -it --entrypoint bash titasik/ubuntu_dev:20.04 
 
 # login to exiting container
-start -a -i <container-id>
-start -a -i f108912d2ce1
+docker start -a -i <container-id>
+
+docker start -a -i f108912d2ce1
 
 # exit clean
 docker rm -v -f $(docker ps -qa)
+
 echo y | docker container prune
 
 
-#run unbuntu 20.04
+# run unbuntu 20.04
 docker run -it 3cff1c6ff37e bash
+
 docker run --name ubuntu_dev -it 3cff1c6ff37e bash
 
 docker run --rm nano:test -buildconf
@@ -33,10 +39,13 @@ docker cp $(docker create --name copyOutput nano:test):/usr/local/bin/nano ./ &&
 
 # clear files
 docker stop $(docker ps -q)
+
 docker rm $(docker ps -a -q)
 
 docker container prune -f
+
 docker image prune -f
+
 docker buildx prune -f
 
 
