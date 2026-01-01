@@ -46,14 +46,14 @@ jobs:
           toolset: ${{steps.setup-php.outputs.toolset}}
       - name: phpize
         run: |
-          #git clone https://github.com/krakjoe/apcu
-          #cd apcu
-          echo %CD%
-          dir
+          rem git clone https://github.com/krakjoe/apcu
+          rem cd apcu
+          dir D:\a\tester\tester\php-dev
+          dir D:\a\tester\tester\php-dev\include
           phpize
       - name: configure
         run: |
-          cd D:\a\tester\tester\php-dev
+          ererereror
           configure --disable-all --enable-cli --enable-apcu --enable-igbinary --with-prefix=${{steps.setup-php.outputs.prefix}}
       - name: make
         run: nmake
