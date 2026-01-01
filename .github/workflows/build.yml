@@ -46,8 +46,10 @@ jobs:
           toolset: ${{steps.setup-php.outputs.toolset}}
       - name: phpize
         run: |
-          git clone https://github.com/krakjoe/apcu
-          cd apcu
+          #git clone https://github.com/krakjoe/apcu
+          #cd apcu
+          echo %CD%
+          dir
           phpize
       - name: configure
         run: |
