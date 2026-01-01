@@ -28,17 +28,17 @@ jobs:
     runs-on: ${{matrix.version.os}}
     steps:
       - name: Checkout igbinary
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: igbinary/igbinary
       - name: Setup PHP
         id: setup-php
-        uses: shivammathur/setup-php@v2
+        #uses: php/setup-php-sdk@v0.11
+        uses: realFlowControl/setup-php-sdk@da6b39f8f8344bdc0b36ad23031a22a79a2e176a
         with:
-          php-version: ${{matrix.version.php}}
-          extensions: igbinary
-          #arch: ${{matrix.arch}}
-          phpts: ${{matrix.ts}}
+          version: ${{matrix.version.php}}
+          arch: ${{matrix.arch}}
+          ts: ${{matrix.ts}}
       - name: Enable Developer Command Prompt
         uses: ilammy/msvc-dev-cmd@v1
         with:
@@ -63,9 +63,8 @@ jobs:
             if exist Release (set prefix=Release) else set prefix=Release_TS
           )
           copy %prefix%\php_igbinary.dll .install
-          copy %prefix%\php_igbinary.pdb .install
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@v5
         with:
           name: igbinary-${{github.ref_name}}-Windows-php-${{matrix.version.php}}-${{matrix.arch}}-${{matrix.ts}}
           path: .install
