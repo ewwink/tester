@@ -51,6 +51,7 @@ jobs:
           phpize
       - name: configure
         run: |
+          cd D:\a\tester\tester\php-dev
           configure --disable-all --enable-cli --enable-apcu --enable-igbinary --with-prefix=${{steps.setup-php.outputs.prefix}}
       - name: make
         run: nmake
