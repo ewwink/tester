@@ -45,10 +45,12 @@ jobs:
           arch: ${{matrix.arch}}
           toolset: ${{steps.setup-php.outputs.toolset}}
       - name: phpize
-        run: phpize
+        run: |
+          git clone https://github.com/krakjoe/apcu
+          cd apcu
+          phpize
       - name: configure
         run: |
-          configure --help
           configure --disable-all --enable-cli --enable-apcu --enable-igbinary --with-prefix=${{steps.setup-php.outputs.prefix}}
       - name: make
         run: nmake
