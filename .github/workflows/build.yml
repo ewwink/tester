@@ -35,9 +35,10 @@ jobs:
         id: setup-php
         uses: shivammathur/setup-php@v2
         with:
-          version: ${{matrix.version.php}}
-          arch: ${{matrix.arch}}
-          ts: ${{matrix.ts}}
+          php-version: ${{matrix.version.php}}
+          extensions: igbinary
+          #arch: ${{matrix.arch}}
+          phpts: ${{matrix.ts}}
       - name: Enable Developer Command Prompt
         uses: ilammy/msvc-dev-cmd@v1
         with:
