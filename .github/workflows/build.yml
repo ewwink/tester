@@ -53,7 +53,7 @@ jobs:
           phpize
       - name: configure
         run: |
-          configure --with-parallel --enable-debug-pack --with-prefix=${{steps.setup-php.outputs.prefix}}
+          configure --enable-igbinary --enable-debug-pack --with-prefix=${{steps.setup-php.outputs.prefix}}
       - name: make
         run: nmake
       # Run tests, failing if they fail. REPORT_EXIT_STATUS=1 is the default for tests in php 7.2+
@@ -64,9 +64,9 @@ jobs:
           md .install
           copy LICENSE README.md .install
           if exist x64 (
-            if exist x64\Release (set prefix=x64\Release) else set prefix=x64\Release_NTS
+            if exist x64\Release (set prefix=x64\Release) else set prefix=x64\Release_TS
           ) else (
-            if exist Release (set prefix=Release) else set prefix=Release_NTS
+            if exist Release (set prefix=Release) else set prefix=Release_TS
           )
           copy %prefix%\php_igbinary.dll .install
       - name: Upload artifacts
