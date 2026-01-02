@@ -61,6 +61,7 @@ jobs:
         run: nmake test TESTS="--show-diff tests"
       - name: package
         run: |
+          dir D:\a\tester\tester\x64\Release
           md .install
           copy LICENSE README.md .install
           if exist x64 (
@@ -68,7 +69,7 @@ jobs:
           ) else (
             if exist Release (set prefix=Release) else set prefix=Release_TS
           )
-          copy %prefix%\php_igbinary.dll .install
+          copy %prefix% .install
       - name: Upload artifacts
         uses: actions/upload-artifact@v5
         with:
