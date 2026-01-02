@@ -53,7 +53,7 @@ jobs:
           phpize
       - name: configure
         run: |
-          configure --disable-all --enable-cli --enable-apcu --enable-igbinary --with-prefix=${{steps.setup-php.outputs.prefix}}
+          configure --with-parallel --enable-debug-pack --with-prefix=${{steps.setup-php.outputs.prefix}}
       - name: make
         run: nmake
       # Run tests, failing if they fail. REPORT_EXIT_STATUS=1 is the default for tests in php 7.2+
