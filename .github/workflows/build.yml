@@ -69,9 +69,9 @@ jobs:
           ) else (
             if exist Release (set prefix=Release) else set prefix=Release_TS
           )
-          copy %prefix% .install
+          copy %prefix%\php_igbinary.dll .install
       - name: Upload artifacts
         uses: actions/upload-artifact@v5
         with:
           name: igbinary-${{github.ref_name}}-Windows-php-${{matrix.version.php}}-${{matrix.arch}}-${{matrix.ts}}
-          path: .install
+          path: .install/*
