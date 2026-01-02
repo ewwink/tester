@@ -46,14 +46,13 @@ jobs:
           toolset: ${{steps.setup-php.outputs.toolset}}
       - name: phpize
         run: |
-          rem git clone https://github.com/krakjoe/apcu
+          git clone https://github.com/krakjoe/apcu D:\a\tester\tester\php-dev\include\ext\apcu
           rem cd apcu
           dir D:\a\tester\tester\php-dev
           dir D:\a\tester\tester\php-dev\include
           phpize
       - name: configure
         run: |
-          ererereror
           configure --disable-all --enable-cli --enable-apcu --enable-igbinary --with-prefix=${{steps.setup-php.outputs.prefix}}
       - name: make
         run: nmake
@@ -65,9 +64,9 @@ jobs:
           md .install
           copy LICENSE README.md .install
           if exist x64 (
-            if exist x64\Release (set prefix=x64\Release) else set prefix=x64\Release_TS
+            if exist x64\Release (set prefix=x64\Release) else set prefix=x64\Release_NTS
           ) else (
-            if exist Release (set prefix=Release) else set prefix=Release_TS
+            if exist Release (set prefix=Release) else set prefix=Release_NTS
           )
           copy %prefix%\php_igbinary.dll .install
       - name: Upload artifacts
