@@ -2,17 +2,9 @@ name: Build Libcurl Static SSL
 on: [push, workflow_dispatch]
 
 jobs:
-  prepare-deps:
+  build-curl:
     runs-on: windows-latest
-    steps:
-      - name: Restore vcpkg cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            C:/vcpkg/installed
-            ${{ github.workspace }}/vcpkg_installed
-          key: ${{ runner.os }}-vcpkg-openssl-zlib-nghttp2-v1
-
+    steps:          
       - name: Install vcpkg and Dependencies
         run: |
           vcpkg install openssl:x64-windows-static `
@@ -20,18 +12,6 @@ jobs:
                         nghttp2:x64-windows-static `
                         brotli:x64-windows-static `
                         zstd:x64-windows-static
-        
-  build-curl:
-    needs: prepare-deps
-    runs-on: windows-latest
-    steps:          
-      - name: Install Dependencies Restore vcpkg cache (Read Only)
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            C:/vcpkg/installed
-            ${{ github.workspace }}/vcpkg_installed
-          key: ${{ runner.os }}-vcpkg-openssl-zlib-nghttp2-v1
           
       - name: Checkout Curl 8.16.0
         uses: actions/checkout@v4
