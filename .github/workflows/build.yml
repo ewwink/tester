@@ -55,10 +55,6 @@ jobs:
         run: |
           :: 1. Inisialisasi Environment VS
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          
-          :: 2. Tentukan Path VCPKG (Arahkan ke folder x64-windows-static)
-          :: Jika Anda menggunakan manifest mode (vcpkg.json), folder ada di workspace
-          :: Jika tidak, vcpkg biasanya menginstall ke C:\vcpkg\installed\x64-windows-static
           set "VCPKG_ROOT=C:\vcpkg\installed\x64-windows-static"
           
           :: Debug: Pastikan zlib.h ada di sana
@@ -70,6 +66,7 @@ jobs:
 
           :: 3. Masuk ke winbuild
           cd winbuild
+          if errorlevel 1 exit /b 1
           
           :: 4. Jalankan NMAKE
           :: PENTING: Gunakan tanda kutip pada PATH jika ada spasi
@@ -79,8 +76,9 @@ jobs:
             ENABLE_IDN=no ENABLE_LDAP=no ENABLE_IPV6=yes ^
             DEBUG=no GEN_PDB=no ^
             SSL_PATH="%VCPKG_ROOT%" ZLIB_PATH="%VCPKG_ROOT%" NGHTTP2_PATH="%VCPKG_ROOT%" ^
-            MACHINE=x64 CURL_ACKNOWLEDGE_DEPRECATION=1 ^
-            WINBUILD_ACKNOWLEDGE_DEPRECATED=yes
+            BROTLI_PATH="%VCPKG_ROOT%" ZSTD_PATH="%VCPKG_ROOT%" ^
+            MACHINE=x64 WINBUILD_ACKNOWLEDGE_DEPRECATED=yes
+            
 
       - name: Verify Export (Debug)
         shell: cmd
