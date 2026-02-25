@@ -19,6 +19,7 @@ jobs:
           path: |
             ${{ github.workspace }}/vcpkg_installed
             C:/vcpkg/installed
+            ${{ env.LOCALAPPDATA }}/vcpkg/archives
           key: ${{ runner.os }}-vcpkg-openssl-zlib-v1
           restore-keys: |
             ${{ runner.os }}-vcpkg-
@@ -48,11 +49,13 @@ jobs:
           :: 2. Tentukan Path vcpkg (Lokasi library .lib)
           set "VCPKG_ROOT=%GITHUB_WORKSPACE%\vcpkg_installed\x64-windows-static"
           
-          :: 3. Masuk ke winbuild (Masih ada di 8.16.0)
+          :: 3. Masuk ke winbuild
           cd winbuild
           
-          :: 4. Build dengan SSL & ZLIB Statis
-          nmake /f Makefile.vc mode=dll VC=17 WITH_SSL=static WITH_ZLIB=static SSL_PATH="%VCPKG_ROOT%" ZLIB_PATH="%VCPKG_ROOT%" MACHINE=x64
+          :: 4. Jalankan NMAKE dengan ACKNOWLEDGE flag
+          nmake /f Makefile.vc mode=dll VC=17 WITH_SSL=static WITH_ZLIB=static ^
+            SSL_PATH="%VCPKG_ROOT%" ZLIB_PATH="%VCPKG_ROOT%" ^
+            MACHINE=x64 CURL_ACKNOWLEDGE_DEPRECATION=1
 
       - name: Verify Export (Debug)
         shell: cmd
