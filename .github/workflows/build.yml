@@ -38,11 +38,12 @@ jobs:
       - name: Force Export SSL Functions
         shell: powershell
         run: |
+          vcpkg install nghttp2:x64-windows-static
           # Menambahkan fungsi SSL ke tabel export libcurl.dll
           $defFile = "lib/libcurl.def"
           if (Test-Path $defFile) {
-              Add-Content -Path $defFile -Value "  SSL_get_version"
-              Add-Content -Path $defFile -Value "  SSL_get_cipher"
+              Add-Content -Path $defFile -Value "`nSSL_get_version"
+              Add-Content -Path $defFile -Value "`nSSL_get_cipher"
               Write-Host "Fungsi SSL berhasil ditambahkan ke .def file."
           }
 
@@ -69,8 +70,9 @@ jobs:
           
           :: 4. Jalankan NMAKE
           :: PENTING: Gunakan tanda kutip pada PATH jika ada spasi
-          nmake /f Makefile.vc mode=dll VC=17 WITH_SSL=static WITH_ZLIB=static ^
-            SSL_PATH="%VCPKG_ROOT%" ZLIB_PATH="%VCPKG_ROOT%" ^
+          set "LDFLAGS=/EXPORT:SSL_get_version /EXPORT:SSL_get_cipher"
+          nmake /f Makefile.vc mode=dll VC=17 WITH_SSL=static WITH_ZLIB=static WITH_NGHTTP2=static ^
+            SSL_PATH="%VCPKG_ROOT%" ZLIB_PATH="%VCPKG_ROOT%" NGHTTP2_PATH="%VCPKG_ROOT%" ^
             MACHINE=x64 CURL_ACKNOWLEDGE_DEPRECATION=1 ^
             WINBUILD_ACKNOWLEDGE_DEPRECATED=yes
 
