@@ -4,98 +4,65 @@ on: [workflow_dispatch]
 jobs:
   build:
     runs-on: windows-latest
-
     steps:
-      - name: Checkout
+      - name: Checkout Curl 8.16.0
         uses: actions/checkout@v4
+        with:
+          repository: curl/curl
+          ref: curl-8_16_0  # Kembali ke versi yang masih punya winbuild
+          fetch-depth: 1
 
-      - name: Install MSYS2 + dependencies
-        shell: pwsh
+      - name: Restore vcpkg cache
+        id: cache-vcpkg
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/vcpkg_installed
+            C:/vcpkg/installed
+          key: ${{ runner.os }}-vcpkg-openssl-zlib-v1
+          restore-keys: |
+            ${{ runner.os }}-vcpkg-
+
+      - name: Install Dependencies
+        if: steps.cache-vcpkg.outputs.cache-hit != 'true'
         run: |
-          choco install msys2 --no-progress
-          # Refresh environment
-          $env:Path += ";C:\tools\msys64\usr\bin"
-          # Install packages
-          C:\tools\msys64\usr\bin\bash.exe -lc "
-            pacman -Syu --noconfirm
-            pacman -S --noconfirm --needed \
-              base-devel mingw-w64-x86_64-toolchain \
-              mingw-w64-x86_64-openssl \
-              autoconf automake libtool pkgconf \
-              mingw-w64-x86_64-perl
-          "
+          vcpkg install openssl:x64-windows-static zlib:x64-windows-static
 
-      - name: Download curl source (latest)
-        shell: pwsh
+      - name: Force Export SSL Functions
+        shell: powershell
         run: |
-          $curlVersion = "8.10.1"   # ganti dengan versi terbaru, cek https://curl.se/download.html
-          Invoke-WebRequest -Uri "https://curl.se/download/curl-${curlVersion}.tar.gz" -OutFile "curl.tar.gz"
-          tar -xzf curl.tar.gz
-          mv curl-${curlVersion} curl-src
+          # Menambahkan fungsi SSL ke tabel export libcurl.dll
+          $defFile = "lib/libcurl.def"
+          if (Test-Path $defFile) {
+              Add-Content -Path $defFile -Value "  SSL_get_version"
+              Add-Content -Path $defFile -Value "  SSL_get_cipher"
+              Write-Host "Fungsi SSL berhasil ditambahkan ke .def file."
+          }
 
-      - name: Build OpenSSL static (jika ingin versi lebih baru dari MSYS2)
-        shell: msys2 {0}
-        working-directory: .
+      - name: Configure and Build
+        shell: cmd
         run: |
-          # Optional: build OpenSSL sendiri jika MSYS2 version terlalu lama
-          curl -L -o openssl-3.3.2.tar.gz https://www.openssl.org/source/openssl-3.3.2.tar.gz
-          tar -xzf openssl-3.3.2.tar.gz
-          cd openssl-3.3.2
+          :: 1. Inisialisasi Environment VS
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          
+          :: 2. Tentukan Path vcpkg (Lokasi library .lib)
+          set "VCPKG_ROOT=%GITHUB_WORKSPACE%\vcpkg_installed\x64-windows-static"
+          
+          :: 3. Masuk ke winbuild (Masih ada di 8.16.0)
+          cd winbuild
+          
+          :: 4. Build dengan SSL & ZLIB Statis
+          nmake /f Makefile.vc mode=dll VC=17 WITH_SSL=static WITH_ZLIB=static SSL_PATH="%VCPKG_ROOT%" ZLIB_PATH="%VCPKG_ROOT%" MACHINE=x64
 
-          perl Configure VC-WIN64A no-shared --prefix=$PWD/install --openssldir=$PWD/install
-          nmake
-          nmake install
-
-          echo "OPENSSL_DIR=$PWD/install" >> $GITHUB_ENV
-
-      - name: Build libcurl with static OpenSSL → single DLL
-        shell: msys2 {0}
-        working-directory: curl-src
-        env:
-          # Jika pakai OpenSSL dari MSYS2, comment baris OPENSSL_DIR di bawah
-          # OPENSSL_DIR: /mingw64
-          OPENSSL_DIR: ${{ env.OPENSSL_DIR }}
+      - name: Verify Export (Debug)
+        shell: cmd
         run: |
-          # Pastikan di shell 64-bit
-          . /etc/profile
-          export PATH="/mingw64/bin:$PATH"
+          :: Cek apakah SSL_get_version benar-benar ada di dalam DLL
+          dumpbin /exports builds\libcurl-vc17-x64-release-dll-ssl-static-zlib-static-ipv6-sspi\bin\libcurl.dll | findstr "SSL_get_version"
 
-          # Optional: tambah path openssl custom
-          # export PKG_CONFIG_PATH="$OPENSSL_DIR/lib/pkgconfig:$PKG_CONFIG_PATH"
-          # export LDFLAGS="-L$OPENSSL_DIR/lib"
-          # export CFLAGS="-I$OPENSSL_DIR/include"
-
-          autoreconf -fi
-
-          ./configure \
-            --build=x86_64-w64-mingw32 \
-            --host=x86_64-w64-mingw32 \
-            --prefix=/mingw64 \
-            --enable-shared \
-            --disable-static \
-            --with-openssl \
-            --without-zlib \     # optional, kalau tidak butuh compression
-            --without-libidn2 \
-            --without-libssh2 \
-            --enable-optimize \
-            --enable-verbose
-
-          # Kalau mau lebih agresif static-link OpenSSL
-          # Tambahkan LDFLAGS="-static-libgcc -Wl,-Bstatic -lssl -lcrypto -Wl,-Bdynamic"
-
-          make -j$(nproc)
-          make install
-
-      - name: Check dependencies (pastikan hampir tidak ada external SSL)
-        shell: msys2 {0}
-        run: |
-          /mingw64/bin/dependencywalker /mingw64/bin/curl.exe || true
-          /mingw64/bin/ldd /mingw64/bin/libcurl-4.dll || true
-
-      - name: Upload hasil
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: libcurl-single-dll
-          path: |
-            curl-src/lib/.libs/libcurl-*.dll
-            /mingw64/bin/libcurl-*.dll
+          name: libcurl-8.16.0-custom
+          path: builds/libcurl-vc17-x64-release-dll-ssl-static-zlib-static-ipv6-sspi/bin/*
+
