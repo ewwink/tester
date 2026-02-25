@@ -11,23 +11,46 @@ jobs:
           repository: curl/curl
           fetch-depth: 1
 
-      - name: Setup vcpkg
+      - name: Restore vcpkg cache
+        id: cache-vcpkg
+        uses: actions/cache@v4
+        with:
+          # Path yang perlu di-cache: binary vcpkg dan hasil install-nya
+          path: |
+            ${{ github.workspace }}/vcpkg_installed
+            C:/vcpkg/installed
+          # Key unik berdasarkan OS dan daftar package
+          key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}-openssl-zlib
+          restore-keys: |
+            ${{ runner.os }}-vcpkg-
+
+      - name: Install Dependencies (vcpkg)
+        # Jalankan ini hanya jika cache TIDAK ditemukan (cache-hit != 'true')
+        if: steps.cache-vcpkg.outputs.cache-hit != 'true'
         run: |
           vcpkg install openssl:x64-windows-static zlib:x64-windows-static
 
       - name: Configure and Build
         shell: cmd
         run: |
-          :: 1. Inisialisasi Environment Visual Studio
+          :: 1. Inisialisasi Environment VS
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          
-          :: 2. Masuk ke direktori winbuild secara eksplisit dari root checkout
-          cd %GITHUB_WORKSPACE%\winbuild
-          if %errorlevel% neq 0 exit /b %errorlevel%
 
-          :: 3. Jalankan NMAKE dengan path SSL yang sudah di-resolve oleh vcpkg
-          :: Perhatikan: vcpkg_installed biasanya ada di root repo
-          nmake /f Makefile.vc mode=dll VC=17 WITH_SSL=static SSL_PATH="%GITHUB_WORKSPACE%\vcpkg_installed\x64-windows-static" MACHINE=x64
+          :: 2. Tentukan Path SSL secara dinamis (Pastikan vcpkg install sukses sebelumnya)
+          set "SSL_DIR=%GITHUB_WORKSPACE%\vcpkg_installed\x64-windows-static"
+          echo SSL Path is: %SSL_DIR%
+
+          :: 3. Masuk ke folder winbuild
+          cd /d "%GITHUB_WORKSPACE%\winbuild"
+          if errorlevel 1 (
+            echo FOLDER winbuild TIDAK DITEMUKAN!
+            dir "%GITHUB_WORKSPACE%"
+            exit /b 1
+          )
+
+          :: 4. Jalankan NMAKE
+          :: Gunakan tanda kutip pada SSL_PATH untuk jaga-jaga ada spasi
+          nmake /f Makefile.vc mode=dll VC=17 WITH_SSL=static SSL_PATH="%SSL_DIR%" MACHINE=x64
 
       - name: List Files for Debug
         run: |
