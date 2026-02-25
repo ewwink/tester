@@ -20,12 +20,6 @@ jobs:
                         nghttp2:x64-windows-static `
                         brotli:x64-windows-static `
                         zstd:x64-windows-static
-      - name: Checkout Curl 8.16.0
-        uses: actions/checkout@v4
-        with:
-          repository: curl/curl
-          ref: curl-8_16_0  # Kembali ke versi yang masih punya winbuild
-          fetch-depth: 1
         
   build-curl:
     needs: prepare-deps
@@ -38,7 +32,14 @@ jobs:
             C:/vcpkg/installed
             ${{ github.workspace }}/vcpkg_installed
           key: ${{ runner.os }}-vcpkg-openssl-zlib-nghttp2-v1
-
+          
+      - name: Checkout Curl 8.16.0
+        uses: actions/checkout@v4
+        with:
+          repository: curl/curl
+          ref: curl-8_16_0  # Kembali ke versi yang masih punya winbuild
+          fetch-depth: 1
+          
       - name: Force Export SSL Functions
         shell: powershell
         run: |
@@ -71,7 +72,8 @@ jobs:
           :: 4. Jalankan NMAKE
           :: PENTING: Gunakan tanda kutip pada PATH jika ada spasi
           set "LDFLAGS=/OPT:REF /OPT:ICF /EXPORT:SSL_get_version /EXPORT:SSL_get_cipher"
-          nmake /f Makefile.vc mode=dll VC=17 WITH_SSL=static WITH_ZLIB=static WITH_NGHTTP2=static ^
+          nmake /f Makefile.vc mode=dll VC=17 ^
+            WITH_SSL=static WITH_ZLIB=static WITH_NGHTTP2=static ^
             WITH_BROTLI=static WITH_ZSTD=static ^
             ENABLE_IDN=no ENABLE_LDAP=no ENABLE_IPV6=yes ^
             DEBUG=no GEN_PDB=no ^
