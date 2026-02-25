@@ -13,62 +13,37 @@ jobs:
           fetch-depth: 1
           # Jangan gunakan parameter 'path' agar file langsung ada di root
 
-      # 2. Debugging: Lihat isi folder (untuk memastikan winbuild ada)
-      - name: List Files
-        shell: cmd
-        run: |
-          echo "Current location: %CD%"
-          dir
-          if exist winbuild (echo "WINBUILD FOUND!") else (echo "WINBUILD MISSING!")
-          
-      - name: Restore vcpkg cache
-        id: cache-vcpkg
-        uses: actions/cache@v4
-        with:
-          # Path yang perlu di-cache: binary vcpkg dan hasil install-nya
-          path: |
-            ${{ github.workspace }}/vcpkg_installed
-            C:/vcpkg/installed
-          # Key unik berdasarkan OS dan daftar package
-          key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}-openssl-zlib
-          restore-keys: |
-            ${{ runner.os }}-vcpkg-
-            
-      # 3. Cache & Install Vcpkg (OpenSSL & Zlib)
-      - name: Install Dependencies
-        # Jalankan ini hanya jika cache TIDAK ditemukan (cache-hit != 'true')
-        if: steps.cache-vcpkg.outputs.cache-hit != 'true'
-        run: |
-          vcpkg install openssl:x64-windows-static zlib:x64-windows-static
-
-      # 4. Export Fungsi SSL (Agar bisa dipanggil C#)
-      - name: Force Export SSL Functions
-        shell: powershell
-        run: |
-          # Menambahkan fungsi OpenSSL ke daftar export DLL
-          Add-Content -Path lib/libcurl.def -Value "  SSL_get_version"
-          Add-Content -Path lib/libcurl.def -Value "  SSL_get_cipher"
-
       # 5. Compile
-      - name: Configure and Build
+      - name: Configure and Build with CMake
         shell: cmd
         run: |
+          :: 1. Inisialisasi Environment VS
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          
-          :: Set path manual untuk vcpkg (vcpkg_installed biasanya di root repo)
-          set "SSL_DIR=%GITHUB_WORKSPACE%\vcpkg_installed\x64-windows-static"
-          
-          cd winbuild
-          nmake /f Makefile.vc mode=dll VC=17 WITH_SSL=static SSL_PATH="%SSL_DIR%" WITH_ZLIB=static ZLIB_PATH="%SSL_DIR%" MACHINE=x64
+
+          :: 2. Buat folder build
+          mkdir build
+          cd build
+
+          :: 3. Jalankan CMake
+          :: -DCURL_USE_OPENSSL=ON dan -DCURL_STATIC_CRT=ON untuk menyatukan library
+          cmake .. -G "Visual Studio 17 2022" -A x64 ^
+            -DCMAKE_TOOLCHAIN_FILE="%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
+            -DVCPKG_TARGET_TRIPLET=x64-windows-static ^
+            -DBUILD_SHARED_LIBS=ON ^
+            -DCURL_USE_OPENSSL=ON ^
+            -DCURL_ZLIB=ON ^
+            -DCURL_STATIC_CRT=ON
+
+          :: 4. Compile (Build)
+          cmake --build . --config Release
           
       - name: List Files for Debug
         run: |
-          dir
-          dir winbuild
+          dir build/src/Release
 
           
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: libcurl-with-static-ssl
-          path: builds/libcurl-vc17-x64-release-dll-ssl-static-ipv6-sspi/*
+          path: build/src/Release/*
