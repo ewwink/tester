@@ -54,7 +54,6 @@ jobs:
       - name: Configure and Build
         shell: cmd
         run: |
-          vcpkg install nghttp3:x64-windows-static
           :: 1. Inisialisasi Environment VS
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
           set "VCPKG_ROOT=C:\vcpkg\installed\x64-windows-static"
@@ -71,19 +70,20 @@ jobs:
           if errorlevel 1 exit /b 1
 
           :: clean cache
-          nmake /f Makefile.vc mode=dll VC=17 clean
+          nmake /f Makefile.vc mode=dll VC=17 WINBUILD_ACKNOWLEDGE_DEPRECATED=yes clean
           
           :: 4. Jalankan NMAKE
           :: PENTING: Gunakan tanda kutip pada PATH jika ada spasi
           set "LDFLAGS=/OPT:REF /OPT:ICF /EXPORT:SSL_get_version /EXPORT:SSL_get_cipher"
           nmake /f Makefile.vc mode=dll VC=17 ^
-            WITH_SSL=static WITH_ZLIB=static WITH_NGHTTP2=static WITH_NGHTTP3=static ^
+            WITH_SSL=static WITH_ZLIB=static WITH_NGHTTP2=static ^
             WITH_BROTLI=static WITH_ZSTD=static ^
             ENABLE_IDN=no ENABLE_LDAP=no ENABLE_IPV6=yes ^
             DEBUG=no GEN_PDB=no ^
-            SSL_PATH="%VCPKG_ROOT%" ZLIB_PATH="%VCPKG_ROOT%" NGHTTP2_PATH="%VCPKG_ROOT%" NGHTTP3_PATH="%VCPKG_ROOT%" ^
+            SSL_PATH="%VCPKG_ROOT%" ZLIB_PATH="%VCPKG_ROOT%" NGHTTP2_PATH="%VCPKG_ROOT%" ^
             BROTLI_PATH="%VCPKG_ROOT%" ZSTD_PATH="%VCPKG_ROOT%" ^
-            MACHINE=x64 WINBUILD_ACKNOWLEDGE_DEPRECATED=yes CURL_ACKNOWLEDGE_DEPRECATION=1
+            CURL_ACKNOWLEDGE_DEPRECATION=1 ^
+            MACHINE=x64 WINBUILD_ACKNOWLEDGE_DEPRECATED=yes
             
 
       - name: Verify Export (Debug)
