@@ -18,11 +18,22 @@ jobs:
       - name: Configure and Build
         shell: cmd
         run: |
+          :: 1. Inisialisasi Environment Visual Studio
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          cd winbuild
-          :: WITH_SSL=static dan RTLIBCFG=static akan menggabungkan semuanya ke satu DLL
-          nmake /f Makefile.vc mode=dll VC=17 WITH_SSL=static SSL_PATH="D:\a\${{ github.event.repository.name }}\${{ github.event.repository.name }}\vcpkg_installed\x64-windows-static" MACHINE=x64
+          
+          :: 2. Masuk ke direktori winbuild secara eksplisit dari root checkout
+          cd %GITHUB_WORKSPACE%\winbuild
+          if %errorlevel% neq 0 exit /b %errorlevel%
 
+          :: 3. Jalankan NMAKE dengan path SSL yang sudah di-resolve oleh vcpkg
+          :: Perhatikan: vcpkg_installed biasanya ada di root repo
+          nmake /f Makefile.vc mode=dll VC=17 WITH_SSL=static SSL_PATH="%GITHUB_WORKSPACE%\vcpkg_installed\x64-windows-static" MACHINE=x64
+
+      - name: List Files for Debug
+        run: |
+          dir
+          dir winbuild
+          
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
