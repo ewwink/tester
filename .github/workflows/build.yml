@@ -17,6 +17,7 @@ jobs:
         run: vcpkg install openssl:x64-windows-static zlib:x64-windows-static
         
   build-curl:
+    needs: prepare-deps
     runs-on: windows-latest
     steps:
       - name: Checkout Curl 8.16.0
