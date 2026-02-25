@@ -1,5 +1,5 @@
 name: Build Libcurl Static SSL
-on: [workflow_dispatch]
+on: [push, workflow_dispatch]
 
 jobs:
   prepare-deps:
@@ -77,8 +77,10 @@ jobs:
       - name: Verify Export (Debug)
         shell: cmd
         run: |
+          dir builds
+          dir builds\libcurl-vc17-x64-release-dll-ssl-static-zlib-static-ipv6-sspi\bin\
           :: Cek apakah SSL_get_version benar-benar ada di dalam DLL
-          dumpbin /exports builds\libcurl-vc17-x64-release-dll-ssl-static-zlib-static-ipv6-sspi\bin\libcurl.dll | findstr "SSL_get_version"
+          :: dumpbin /exports builds\libcurl-vc17-x64-release-dll-ssl-static-zlib-static-ipv6-sspi\bin\libcurl.dll | findstr "SSL_get_version"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
