@@ -17,31 +17,39 @@ jobs:
       - name: Configure and Build with CMake
         shell: cmd
         run: |
+          :: 1. Inisialisasi Environment VS
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          
+
+          :: 2. Buat folder build
           mkdir build
           cd build
 
-          :: Gunakan CMAKE_TOOLCHAIN_FILE agar CMake 'bertanya' ke vcpkg lokasi ZLIB & OpenSSL
+          :: 3. Jalankan CMake dengan Toolchain vcpkg yang benar
+          :: PENTING: Gunakan -DVCPKG_TARGET_TRIPLET=x64-windows-static
           cmake .. -G "Visual Studio 17 2022" -A x64 ^
             -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" ^
             -DVCPKG_TARGET_TRIPLET=x64-windows-static ^
             -DCURL_USE_OPENSSL=ON ^
             -DCURL_ZLIB=ON ^
             -DBUILD_SHARED_LIBS=ON ^
+            -DBUILD_CURL_EXE=ON ^
             -DCURL_STATIC_CRT=ON ^
             -DCMAKE_SHARED_LINKER_FLAGS="/EXPORT:SSL_get_version /EXPORT:SSL_get_cipher"
 
-          :: Build menggunakan config Release
+          :: 4. Build Project
           cmake --build . --config Release
           
       - name: List Files for Debug
         run: |
+          dur build
           dir build/src/Release
+          dir build/lib/Release
 
           
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: libcurl-with-static-ssl
-          path: build/src/Release/*
+          name: libcurl-cmake-static
+          path: |
+            build/lib/Release/libcurl.dll
+            build/src/Release/curl.exe
