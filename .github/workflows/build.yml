@@ -1,45 +1,30 @@
-name: Build libcurl with OpenSSL (TLS 1.3)
-
-on:
-  workflow_dispatch: # Jalankan manual dari tab "Actions" di GitHub
+name: Build Libcurl Static SSL
+on: [workflow_dispatch]
 
 jobs:
-  build-windows:
+  build:
     runs-on: windows-latest
-
     steps:
-      - name: Checkout Repository
+      - name: Checkout Curl
         uses: actions/checkout@v4
+        with:
+          repository: curl/curl
+          fetch-depth: 1
 
       - name: Setup vcpkg
         run: |
-          git clone https://github.com/microsoft/vcpkg
-          ./vcpkg/bootstrap-vcpkg.bat
+          vcpkg install openssl:x64-windows-static zlib:x64-windows-static
 
-      - name: Install Curl with OpenSSL & HTTP2
-        shell: pwsh
+      - name: Configure and Build
+        shell: cmd
         run: |
-          # Kita paksa menggunakan OpenSSL (bukan Schannel) dan nghttp2
-          ./vcpkg/vcpkg install "curl[openssl,http2]" --triplet x64-windows
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          cd winbuild
+          :: WITH_SSL=static dan RTLIBCFG=static akan menggabungkan semuanya ke satu DLL
+          nmake /f Makefile.vc mode=dll VC=17 WITH_SSL=static SSL_PATH="D:\a\${{ github.event.repository.name }}\${{ github.event.repository.name }}\vcpkg_installed\x64-windows-static" MACHINE=x64
 
-      - name: Prepare Artifacts
-        shell: pwsh
-        run: |
-          # Buat folder untuk menampung semua DLL yang dibutuhkan
-          New-Item -ItemType Directory -Force -Path ./output
-          
-          # Lokasi hasil build vcpkg
-          $binPath = "./vcpkg/installed/x64-windows/bin"
-          
-          # Copy libcurl dan dependensinya (OpenSSL, Zlib, nghttp2)
-          Copy-Item "$binPath/libcurl.dll" -Destination "./output/"
-          Copy-Item "$binPath/libcrypto-3-x64.dll" -Destination "./output/" -ErrorAction SilentlyContinue
-          Copy-Item "$binPath/libssl-3-x64.dll" -Destination "./output/" -ErrorAction SilentlyContinue
-          Copy-Item "$binPath/zlib1.dll" -Destination "./output/" -ErrorAction SilentlyContinue
-          Copy-Item "$binPath/nghttp2.dll" -Destination "./output/" -ErrorAction SilentlyContinue
-
-      - name: Upload Libcurl Bundle
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: libcurl-openssl-x64
-          path: ./output/*
+          name: libcurl-with-static-ssl
+          path: builds/libcurl-vc17-x64-release-dll-ssl-static-ipv6-sspi/*
