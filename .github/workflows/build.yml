@@ -2,7 +2,21 @@ name: Build Libcurl Static SSL
 on: [workflow_dispatch]
 
 jobs:
-  build:
+  prepare-deps:
+    runs-on: windows-latest
+    steps:
+      - name: Restore vcpkg cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            C:/vcpkg/installed
+            ${{ github.workspace }}/vcpkg_installed
+          key: ${{ runner.os }}-vcpkg-openssl-zlib-v1
+
+      - name: Install vcpkg
+        run: vcpkg install openssl:x64-windows-static zlib:x64-windows-static
+        
+  build-curl:
     runs-on: windows-latest
     steps:
       - name: Checkout Curl 8.16.0
@@ -11,23 +25,14 @@ jobs:
           repository: curl/curl
           ref: curl-8_16_0  # Kembali ke versi yang masih punya winbuild
           fetch-depth: 1
-
-      - name: Restore vcpkg cache
-        id: cache-vcpkg
-        uses: actions/cache@v4
+          
+      - name: Install Dependencies Restore vcpkg cache (Read Only)
+        uses: actions/cache/restore@v4
         with:
           path: |
-            ${{ github.workspace }}/vcpkg_installed
             C:/vcpkg/installed
-            ${{ env.LOCALAPPDATA }}/vcpkg/archives
+            ${{ github.workspace }}/vcpkg_installed
           key: ${{ runner.os }}-vcpkg-openssl-zlib-v1
-          restore-keys: |
-            ${{ runner.os }}-vcpkg-
-
-      - name: Install Dependencies
-        if: steps.cache-vcpkg.outputs.cache-hit != 'true'
-        run: |
-          vcpkg install openssl:x64-windows-static zlib:x64-windows-static
 
       - name: Force Export SSL Functions
         shell: powershell
@@ -55,7 +60,8 @@ jobs:
           :: 4. Jalankan NMAKE dengan ACKNOWLEDGE flag
           nmake /f Makefile.vc mode=dll VC=17 WITH_SSL=static WITH_ZLIB=static ^
             SSL_PATH="%VCPKG_ROOT%" ZLIB_PATH="%VCPKG_ROOT%" ^
-            MACHINE=x64 CURL_ACKNOWLEDGE_DEPRECATION=1
+            MACHINE=x64 CURL_ACKNOWLEDGE_DEPRECATION=1 ^
+            WINBUILD_ACKNOWLEDGE_DEPRECATED=yes
 
       - name: Verify Export (Debug)
         shell: cmd
