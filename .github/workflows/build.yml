@@ -17,24 +17,22 @@ jobs:
       - name: Configure and Build with CMake
         shell: cmd
         run: |
-          :: 1. Inisialisasi Environment VS
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-
-          :: 2. Buat folder build
+          
           mkdir build
           cd build
 
-          :: 3. Jalankan CMake
-          :: -DCURL_USE_OPENSSL=ON dan -DCURL_STATIC_CRT=ON untuk menyatukan library
+          :: Gunakan CMAKE_TOOLCHAIN_FILE agar CMake 'bertanya' ke vcpkg lokasi ZLIB & OpenSSL
           cmake .. -G "Visual Studio 17 2022" -A x64 ^
-            -DCMAKE_TOOLCHAIN_FILE="%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
+            -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" ^
             -DVCPKG_TARGET_TRIPLET=x64-windows-static ^
-            -DBUILD_SHARED_LIBS=ON ^
             -DCURL_USE_OPENSSL=ON ^
             -DCURL_ZLIB=ON ^
-            -DCURL_STATIC_CRT=ON
+            -DBUILD_SHARED_LIBS=ON ^
+            -DCURL_STATIC_CRT=ON ^
+            -DCMAKE_SHARED_LINKER_FLAGS="/EXPORT:SSL_get_version /EXPORT:SSL_get_cipher"
 
-          :: 4. Compile (Build)
+          :: Build menggunakan config Release
           cmake --build . --config Release
           
       - name: List Files for Debug
