@@ -2,55 +2,100 @@ name: Build Libcurl Static SSL
 on: [workflow_dispatch]
 
 jobs:
-  build-curl:
+  build:
     runs-on: windows-latest
+
     steps:
-      # 1. Pastikan checkout repository CURL dengan benar ke root
-      - name: Checkout Curl Source
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          repository: curl/curl
-          fetch-depth: 1
-          # Jangan gunakan parameter 'path' agar file langsung ada di root
 
-      # 5. Compile
-      - name: Configure and Build with CMake
-        shell: cmd
+      - name: Install MSYS2 + dependencies
+        shell: pwsh
         run: |
-          vcpkg install zlib:x64-windows
-          :: 1. Inisialisasi Environment VS
-          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          choco install msys2 --no-progress
+          # Refresh environment
+          $env:Path += ";C:\tools\msys64\usr\bin"
+          # Install packages
+          C:\tools\msys64\usr\bin\bash.exe -lc "
+            pacman -Syu --noconfirm
+            pacman -S --noconfirm --needed \
+              base-devel mingw-w64-x86_64-toolchain \
+              mingw-w64-x86_64-openssl \
+              autoconf automake libtool pkgconf \
+              mingw-w64-x86_64-perl
+          "
 
-          :: 2. Buat folder build
-          mkdir build
-          cd build
-
-          :: 3. Jalankan CMake dengan Toolchain vcpkg yang benar
-          :: PENTING: Gunakan -DVCPKG_TARGET_TRIPLET=x64-windows-static
-          cmake .. -G "Visual Studio 17 2022" -A x64 ^
-            -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" ^
-            -DVCPKG_TARGET_TRIPLET=x64-windows-static ^
-            -DCURL_USE_OPENSSL=ON ^
-            -DCURL_ZLIB=ON ^
-            -DBUILD_SHARED_LIBS=ON ^
-            -DBUILD_CURL_EXE=ON ^
-            -DCURL_STATIC_CRT=ON ^
-            -DCMAKE_SHARED_LINKER_FLAGS="/EXPORT:SSL_get_version /EXPORT:SSL_get_cipher"
-
-          :: 4. Build Project
-          cmake --build . --config Release
-          
-      - name: List Files for Debug
+      - name: Download curl source (latest)
+        shell: pwsh
         run: |
-          dur build
-          dir build/src/Release
-          dir build/lib/Release
+          $curlVersion = "8.10.1"   # ganti dengan versi terbaru, cek https://curl.se/download.html
+          Invoke-WebRequest -Uri "https://curl.se/download/curl-${curlVersion}.tar.gz" -OutFile "curl.tar.gz"
+          tar -xzf curl.tar.gz
+          mv curl-${curlVersion} curl-src
 
-          
-      - name: Upload Artifact
+      - name: Build OpenSSL static (jika ingin versi lebih baru dari MSYS2)
+        shell: msys2 {0}
+        working-directory: .
+        run: |
+          # Optional: build OpenSSL sendiri jika MSYS2 version terlalu lama
+          curl -L -o openssl-3.3.2.tar.gz https://www.openssl.org/source/openssl-3.3.2.tar.gz
+          tar -xzf openssl-3.3.2.tar.gz
+          cd openssl-3.3.2
+
+          perl Configure VC-WIN64A no-shared --prefix=$PWD/install --openssldir=$PWD/install
+          nmake
+          nmake install
+
+          echo "OPENSSL_DIR=$PWD/install" >> $GITHUB_ENV
+
+      - name: Build libcurl with static OpenSSL → single DLL
+        shell: msys2 {0}
+        working-directory: curl-src
+        env:
+          # Jika pakai OpenSSL dari MSYS2, comment baris OPENSSL_DIR di bawah
+          # OPENSSL_DIR: /mingw64
+          OPENSSL_DIR: ${{ env.OPENSSL_DIR }}
+        run: |
+          # Pastikan di shell 64-bit
+          . /etc/profile
+          export PATH="/mingw64/bin:$PATH"
+
+          # Optional: tambah path openssl custom
+          # export PKG_CONFIG_PATH="$OPENSSL_DIR/lib/pkgconfig:$PKG_CONFIG_PATH"
+          # export LDFLAGS="-L$OPENSSL_DIR/lib"
+          # export CFLAGS="-I$OPENSSL_DIR/include"
+
+          autoreconf -fi
+
+          ./configure \
+            --build=x86_64-w64-mingw32 \
+            --host=x86_64-w64-mingw32 \
+            --prefix=/mingw64 \
+            --enable-shared \
+            --disable-static \
+            --with-openssl \
+            --without-zlib \     # optional, kalau tidak butuh compression
+            --without-libidn2 \
+            --without-libssh2 \
+            --enable-optimize \
+            --enable-verbose
+
+          # Kalau mau lebih agresif static-link OpenSSL
+          # Tambahkan LDFLAGS="-static-libgcc -Wl,-Bstatic -lssl -lcrypto -Wl,-Bdynamic"
+
+          make -j$(nproc)
+          make install
+
+      - name: Check dependencies (pastikan hampir tidak ada external SSL)
+        shell: msys2 {0}
+        run: |
+          /mingw64/bin/dependencywalker /mingw64/bin/curl.exe || true
+          /mingw64/bin/ldd /mingw64/bin/libcurl-4.dll || true
+
+      - name: Upload hasil
         uses: actions/upload-artifact@v4
         with:
-          name: libcurl-cmake-static
+          name: libcurl-single-dll
           path: |
-            build/lib/Release/libcurl.dll
-            build/src/Release/curl.exe
+            curl-src/lib/.libs/libcurl-*.dll
+            /mingw64/bin/libcurl-*.dll
