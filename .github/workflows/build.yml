@@ -17,6 +17,7 @@ jobs:
       - name: Configure and Build with CMake
         shell: cmd
         run: |
+          vcpkg install zlib:x64-windows
           :: 1. Inisialisasi Environment VS
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
 
