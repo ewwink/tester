@@ -7,7 +7,7 @@ env:
   ZSTD_COMMIT: 794ea1b0afca0f020f4e57b6732332231fb23c70
   BROTLI_COMMIT: ed738e842d2fbdf2d6459e39267a633c4a9b2f5d
   BORINGSSL_COMMIT: 673e61fc215b178a90c0e67858bbf162c8158993
-  CURL_TAG: curl-8_16_0 # using tags is less secure, but easier to maintain
+  CURL_TAG: curl-8_15_0 # using tags is less secure, but easier to maintain
   NGHTTP2_COMMIT: 8f44147c385fb1ed93a6f39911eeb30279bfd2dd
   NGHTTP3_TAG: v1.15.0
   NGTCP2_TAG: v1.20.0
@@ -40,16 +40,16 @@ jobs:
       - name: Fetch and patch deps
         shell: bash
         run: ./win/deps.sh
-      - name: Export BoringSSL functions from libcurl.dll
+      - name: Export SSL ZSTD &  functions from libcurl.dll
         shell: bash
         run: |
           DEF_FILE="deps/curl/lib/libcurl.def"
           if [[ -f "$DEF_FILE" ]]; then
             echo "        SSL_get_version" >> "$DEF_FILE"
             echo "        SSL_version" >> "$DEF_FILE"
-            echo "        SSL_get_cipher" >> "$DEF_FILE"
-            echo "        SSL_get_cipher_name" >> "$DEF_FILE"
-            echo "        SSL_get_cipher_version" >> "$DEF_FILE"
+            echo "        ZSTD_decompress" >> "$DEF_FILE"
+            echo "        ZSTD_isError" >> "$DEF_FILE"
+            echo "        ZSTD_getErrorName" >> "$DEF_FILE"
             echo "Added exports to $DEF_FILE:"
             tail -n 10 "$DEF_FILE"
           else
@@ -63,6 +63,7 @@ jobs:
         run: ./win/build.bat ${{ matrix.sys }}
         env:
           DISABLE_ASM_ARM64: ${{ matrix.env == 'arm64' && 'true' || 'false' }}
+          CL: /W0 /wd4996 /wd4244 /wd4267 /wd4018 /wd4101 /wd4305 /wd4312 /wd4706 /wd4800
       - name: Build tarball
         shell: bash
         run: |
