@@ -60,17 +60,21 @@ jobs:
       - name: Patch win/build.bat to enable c-ares
         shell: pwsh
         run: |
-          pwd
-          $filePath = "curl-impersonate/win/build.bat"
+          # Gunakan Get-Location untuk melihat direktori aktif saat ini
+          Get-Location 
+          
+          $filePath = "win/build.bat" # Langsung ke folder win
           if (Test-Path $filePath) {
-              (Get-Content $filePath -Raw) `
-              -replace "-DUSE_WIN32_IDN=ON\^`r?`n", "" `
-              -replace "-DENABLE_IPV6=ON", "-DENABLE_IPV6=OFF" `
-              -replace "(-DENABLE_IPV6=OFF\^`r?`n)", "`$1-DENABLE_ARES=ON^`r`n-DCURL_DISABLE_NTLM=ON^`r`n" | 
-              Set-Content $filePath
+              $content = Get-Content $filePath -Raw
+              $content = $content -replace "-DUSE_WIN32_IDN=ON\^`r?`n", ""
+              $content = $content -replace "-DENABLE_IPV6=ON", "-DENABLE_IPV6=OFF"
+              $content = $content -replace "(-DENABLE_IPV6=OFF\^`r?`n)", "`$1-DENABLE_ARES=ON^`r`n-DCURL_DISABLE_NTLM=ON^`r`n"
+              $content | Set-Content $filePath
               Write-Output "Patch selesai: c-ares ditambahkan ke $filePath"
           } else {
-              Write-Error "File $filePath tidak ditemukan!"
+              Write-Error "File $filePath tidak ditemukan di: $((Get-Location).Path)"
+              # Tampilkan daftar file untuk debug jika gagal
+              Get-ChildItem -Recurse -Filter "build.bat"
               exit 1
           }
           
