@@ -61,7 +61,9 @@ jobs:
         shell: pwsh
         working-directory: curl-impersonate
         run: |
-          (Get-Content win\build.bat -Raw) -replace "-DUSE_WIN32_IDN=ON\^`r?`n", "" -replace "-DENABLE_IPV6=ON", "-DENABLE_IPV6=OFF" -replace "(-DENABLE_IPV6=OFF\^`r?`n)", "`$1-DENABLE_ARES=ON^`r`n-DCURL_DISABLE_NTLM=ON^`r`n" | Set-Content win/build.bat
+          dir .
+          dir curl-impersonate
+          (Get-Content win/build.bat -Raw) -replace "-DUSE_WIN32_IDN=ON\^`r?`n", "" -replace "-DENABLE_IPV6=ON", "-DENABLE_IPV6=OFF" -replace "(-DENABLE_IPV6=OFF\^`r?`n)", "`$1-DENABLE_ARES=ON^`r`n-DCURL_DISABLE_NTLM=ON^`r`n" | Set-Content win/build.bat
           Write-Output "Patch selesai: c-ares ditambahkan ke cmake flags"
           
       # - name: Setup tmate session for debugging
