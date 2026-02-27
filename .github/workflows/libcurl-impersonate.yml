@@ -56,9 +56,17 @@ jobs:
             echo "Error: $DEF_FILE not found! Check deps/curl/lib/ after deps.sh."
             exit 1
           fi
+          
+      - name: Patch win/build.bat to enable c-ares
+        shell: pwsh
+        working-directory: curl-impersonate
+        run: |
+          (Get-Content win\build.bat -Raw) -replace "-DUSE_WIN32_IDN=ON\^`r?`n", "" -replace "-DENABLE_IPV6=ON", "-DENABLE_IPV6=OFF" -replace "(-DENABLE_IPV6=OFF\^`r?`n)", "`$1-DENABLE_ARES=ON^`r`n-DCURL_DISABLE_NTLM=ON^`r`n" | Set-Content win/build.bat
+          Write-Output "Patch selesai: c-ares ditambahkan ke cmake flags"
+          
       # - name: Setup tmate session for debugging
       # uses: mxschmitt/action-tmate@v3
-      - name: Build
+      - name: Build libcurl-impersonate
         shell: cmd
         run: ./win/build.bat ${{ matrix.sys }}
         env:
