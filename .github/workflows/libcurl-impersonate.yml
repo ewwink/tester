@@ -59,8 +59,8 @@ jobs:
           
       - name: Patch win/build.bat to enable c-ares
         shell: pwsh
-        working-directory: curl-impersonate
         run: |
+          pwd
           $filePath = "curl-impersonate/win/build.bat"
           if (Test-Path $filePath) {
               (Get-Content $filePath -Raw) `
