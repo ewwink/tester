@@ -61,10 +61,18 @@ jobs:
         shell: pwsh
         working-directory: curl-impersonate
         run: |
-          dir .
-          dir curl-impersonate
-          (Get-Content win/build.bat -Raw) -replace "-DUSE_WIN32_IDN=ON\^`r?`n", "" -replace "-DENABLE_IPV6=ON", "-DENABLE_IPV6=OFF" -replace "(-DENABLE_IPV6=OFF\^`r?`n)", "`$1-DENABLE_ARES=ON^`r`n-DCURL_DISABLE_NTLM=ON^`r`n" | Set-Content win/build.bat
-          Write-Output "Patch selesai: c-ares ditambahkan ke cmake flags"
+          $filePath = "curl-impersonate/win/build.bat"
+          if (Test-Path $filePath) {
+              (Get-Content $filePath -Raw) `
+              -replace "-DUSE_WIN32_IDN=ON\^`r?`n", "" `
+              -replace "-DENABLE_IPV6=ON", "-DENABLE_IPV6=OFF" `
+              -replace "(-DENABLE_IPV6=OFF\^`r?`n)", "`$1-DENABLE_ARES=ON^`r`n-DCURL_DISABLE_NTLM=ON^`r`n" | 
+              Set-Content $filePath
+              Write-Output "Patch selesai: c-ares ditambahkan ke $filePath"
+          } else {
+              Write-Error "File $filePath tidak ditemukan!"
+              exit 1
+          }
           
       # - name: Setup tmate session for debugging
       # uses: mxschmitt/action-tmate@v3
