@@ -58,13 +58,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install build-essential pkg-config cmake ninja-build curl autoconf automake libtool
           sudo apt-get install gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-riscv64-linux-gnu gcc-14-loongarch64-linux-gnu
-          sudo apt-get install golang-go
+          sudo apt-get install golang-go libbsd-dev
 
       - name: Build and install c-ares (static)
         run: |
           git clone --branch v1.34.6 https://github.com/c-ares/c-ares.git
           cd c-ares
           autoreconf -fi
+          LDFLAGS="-lbsd"
           ./configure --prefix=${{ runner.temp }}/cares-install \
                       --enable-static --disable-shared \
                       --host=${{ matrix.host }}
