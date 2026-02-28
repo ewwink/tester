@@ -1,5 +1,5 @@
 name: Build Libcurl Impersonate for windows
-on: [push, workflow_dispatch]
+on: [workflow_dispatch]
 permissions:
   contents: write
 env:
@@ -39,6 +39,14 @@ jobs:
       - name: Install NASM
         shell: cmd
         run: choco install nasm -y
+      
+      - name: Replace win/build.bat and win/deps.sh
+        shell: pwsh
+        run: |
+          Get-Location 
+          Copy-Item curl-impersonate/build.bat win/build.bat -Force
+          Copy-Item curl-impersonate/deps.sh win/deps.sh -Force
+
       - name: Fetch and patch deps
         shell: bash
         run: ./win/deps.sh
@@ -58,15 +66,6 @@ jobs:
             echo "Error: $DEF_FILE not found! Check deps/curl/lib/ after deps.sh."
             exit 1
           fi
-          
-      - name: Replace win/build.bat and win/deps.sh
-        shell: pwsh
-        run: |
-          # Gunakan Get-Location untuk melihat direktori aktif saat ini
-          Get-Location 
-          
-          Copy-Item curl-impersonate/build.bat win/build.bat -Force
-          Copy-Item curl-impersonate/deps.sh win/deps.sh -Force
           
       # - name: Setup tmate session for debugging
       # uses: mxschmitt/action-tmate@v3
