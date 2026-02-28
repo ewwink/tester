@@ -64,7 +64,6 @@ jobs:
         run: |
           git clone --branch v1.34.6 https://github.com/c-ares/c-ares.git
           cd c-ares
-          ./autogen.sh
           ./configure --prefix=${{ runner.temp }}/cares-install \
                       --enable-static --disable-shared \
                       --host=${{ matrix.host }}   # kalau cross-compile
