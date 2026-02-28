@@ -62,9 +62,8 @@ jobs:
 
       - name: Build and install c-ares (static)
         run: |
-          git clone https://github.com/c-ares/c-ares.git
+          git clone --branch v1.34.6 https://github.com/c-ares/c-ares.git
           cd c-ares
-          git checkout cares-1_34_3   # atau tag terbaru, cek https://github.com/c-ares/c-ares/releases
           ./autogen.sh
           ./configure --prefix=${{ runner.temp }}/cares-install \
                       --enable-static --disable-shared \
@@ -72,7 +71,7 @@ jobs:
           make -j$(nproc)
           make install
           cd ..
-          
+
       - name: Run configure script
         run: |
           set -e
