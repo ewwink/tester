@@ -60,6 +60,19 @@ jobs:
           sudo apt-get install gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-riscv64-linux-gnu gcc-14-loongarch64-linux-gnu
           sudo apt-get install golang-go
 
+      - name: Build and install c-ares (static)
+        run: |
+          git clone https://github.com/c-ares/c-ares.git
+          cd c-ares
+          git checkout cares-1_34_3   # atau tag terbaru, cek https://github.com/c-ares/c-ares/releases
+          ./autogen.sh
+          ./configure --prefix=${{ runner.temp }}/cares-install \
+                      --enable-static --disable-shared \
+                      --host=${{ matrix.host }}   # kalau cross-compile
+          make -j$(nproc)
+          make install
+          cd ..
+          
       - name: Run configure script
         run: |
           set -e
