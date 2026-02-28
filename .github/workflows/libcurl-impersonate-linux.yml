@@ -1,0 +1,214 @@
+name: "Build on Linux/Darwin"
+
+on: [workflow_dispatch]
+
+permissions:
+  contents: write
+
+env:
+  BORING_SSL_COMMIT: 673e61fc215b178a90c0e67858bbf162c8158993
+  MACOSX_DEPLOYMENT_TARGET: 11.0
+  API: "21"  # Targeting an very old android API version
+
+jobs:
+  build:
+    name: (${{ matrix.host_label }}) Build curl-impersonate
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            arch: x86_64
+            host: x86_64-linux-gnu
+            host_label: x86_64-linux-gnu
+            zigflags: -target x86_64-linux-gnu.2.17
+            make: make
+          - os: ubuntu-latest
+            platform: linux
+            arch: x86_64
+            host: x86_64-linux-musl
+            host_label: x86_64-linux-musl
+            zigflags: -target x86_64-linux-musl -fPIC
+            make: make
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+        with:
+          repository: lexiforest/curl-impersonate
+
+      - name: Set up zig
+        if: matrix.platform == 'linux'
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.14.0
+
+      - name: Set zig env
+        if: matrix.platform == 'linux'
+        run: |
+          echo "CC=${{ github.workspace }}/zigshim/cc" >> $GITHUB_ENV
+          echo "CXX=${{ github.workspace }}/zigshim/cxx" >> $GITHUB_ENV
+          echo "AR=${{ github.workspace }}/zigshim/ar" >> $GITHUB_ENV
+          echo "ZIG_FLAGS=${{ matrix.zigflags }}" >> $GITHUB_ENV
+
+      - name: Install Ubuntu dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install build-essential pkg-config cmake ninja-build curl autoconf automake libtool
+          sudo apt-get install gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-riscv64-linux-gnu gcc-14-loongarch64-linux-gnu
+          sudo apt-get install golang-go
+
+      - name: Run configure script
+        run: |
+          set -e
+          mkdir ${{ runner.temp }}/install
+          if [[ "${{ matrix.platform }}" == "ios" ]]; then
+            ./configure --prefix=${{ runner.temp }}/install --enable-static --disable-shared \
+                        --host=${{ matrix.host }}
+          elif [[ "${{ runner.os }}" == "Linux" ]]; then
+            ./configure --prefix=${{ runner.temp }}/install --enable-static --disable-shared \
+                        --host=${{ matrix.host }} \
+                        --with-ca-path=/etc/ssl/certs \
+                        --with-ca-bundle=/etc/ssl/certs/ca-certificates.crt
+          else
+            ./configure --prefix=${{ runner.temp }}/install --enable-static --disable-shared
+          fi
+
+      - name: Build statically
+        run: |
+          set -e
+          ${{ matrix.make }} build
+          ${{ matrix.make }} checkbuild
+          if [[ "${{ runner.os }}" == "Linux" && "${{ endsWith(matrix.host, 'musl') }}" == "true" ]]; then
+            ${{ matrix.make }} install
+          else
+            ${{ matrix.make }} install-strip
+          fi
+
+      - name: Create tar release files
+        run: |
+          cp zlib-*/installed/lib/lib*.a ${{ runner.temp }}/install/lib
+          cp zstd-*/installed/lib/lib*.a ${{ runner.temp }}/install/lib
+          cp nghttp2*/installed/lib/lib*.a ${{ runner.temp }}/install/lib
+          cp nghttp3*/installed/lib/lib*.a ${{ runner.temp }}/install/lib
+          cp ngtcp2*/installed/lib/lib*.a ${{ runner.temp }}/install/lib
+          cp brotli*/out/installed/lib/lib*.a ${{ runner.temp }}/install/lib
+          cp boringssl*/lib/lib*.a ${{ runner.temp }}/install/lib
+          if [[ "${{ matrix.platform }}" == "linux" ]]; then
+            cp libidn2*/installed/lib/lib*.a ${{ runner.temp }}/install/lib
+            cp libunistring*/installed/lib/lib*.a ${{ runner.temp }}/install/lib
+          fi
+
+          cd ${{ runner.temp }}/install/lib
+          mv libcurl-impersonate.a libcurl-impersonate.orig.a
+          lib_list="libcurl-impersonate.orig.a libz.a libzstd.a libbrotlidec.a libbrotlicommon.a libbrotlienc.a libnghttp2.a libnghttp3.a libngtcp2.a libngtcp2_crypto_boringssl.a libssl.a libcrypto.a"
+          if [[ "${{ matrix.platform }}" == "linux" ]]; then
+            lib_list="$lib_list libidn2.a"
+          fi
+          if [[ "${{ runner.os }}" == "macOS" || "${{ matrix.platform }}" == "ios" ]]; then
+            libtool -static -o libcurl-impersonate.a $lib_list
+          else
+            $CC -r -o libcurl-impersonate.full.o -Wl,--whole-archive $lib_list -Wl,--no-whole-archive
+            ar rcs libcurl-impersonate.a libcurl-impersonate.full.o
+            rm -f libcurl-impersonate.full.o
+          fi
+          rm -f libz.a libzstd.a libbrotlidec.a libbrotlicommon.a libbrotlienc.a libnghttp2.a libnghttp3.a libngtcp2.a libngtcp2_crypto_boringssl.a libssl.a libcrypto.a
+          if [[ "${{ matrix.platform }}" == "linux" ]]; then
+            rm -f libidn2.a libunistring.a
+          fi
+          rm -f libcurl-impersonate.orig.a
+          ls -lah .
+          if [[ "${{ startsWith(github.ref, 'refs/tags/') }}" == "true" ]]; then
+            tar -c -z -f ${{ runner.temp }}/libcurl-impersonate-${{ github.ref_name }}.${{ matrix.host_label }}.tar.gz lib*
+          else
+            tar -c -z -f ${{ runner.temp }}/libcurl-impersonate.${{ matrix.host_label }}.tar.gz lib*
+          fi
+          echo "release_file_lib=${{ runner.temp }}/libcurl-impersonate-${{ github.ref_name }}.${{ matrix.host_label }}.tar.gz" >> $GITHUB_ENV
+
+          cd ${{ runner.temp }}/install/bin
+          if [[ "${{ startsWith(github.ref, 'refs/tags/') }}" == "true" ]]; then
+            tar -c -z -f ${{ runner.temp }}/curl-impersonate-${{ github.ref_name }}.${{ matrix.host_label }}.tar.gz curl-impersonate curl_*
+          else
+            tar -c -z -f ${{ runner.temp }}/curl-impersonate.${{ matrix.host_label }}.tar.gz curl-impersonate curl_*
+          fi
+          echo "release_file_bin=${{ runner.temp }}/curl-impersonate-${{ github.ref_name }}.${{ matrix.host_label }}.tar.gz" >> $GITHUB_ENV
+
+      - name: Create iOS XCFramework slice
+        if: matrix.platform == 'ios'
+        run: |
+          slice_dir="${{ runner.temp }}/ios-slice"
+          mkdir -p "$slice_dir/lib"
+          cp -R ${{ runner.temp }}/install/include "$slice_dir/"
+          cp ${{ runner.temp }}/install/lib/libcurl-impersonate.a "$slice_dir/lib/"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts.${{ matrix.host_label }}
+          path: |
+            ${{ runner.temp }}/libcurl-impersonate*.tar.gz
+            ${{ runner.temp }}/curl-impersonate*.tar.gz
+
+      - name: Upload iOS slice artifact
+        if: matrix.platform == 'ios'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-slice.${{ matrix.host_label }}
+          path: ${{ runner.temp }}/ios-slice
+
+      - name: Upload release files
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+              ${{ env.release_file_lib }}
+              ${{ env.release_file_bin }}
+
+  ios-xcframework:
+    name: (iOS) Create XCFramework
+    runs-on: macos-14
+    needs: build
+    steps:
+      - name: Download device slice
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-slice.arm64-apple-ios
+          path: ${{ runner.temp }}/ios/device
+
+      - name: Download simulator slice
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-slice.arm64-apple-ios-simulator
+          path: ${{ runner.temp }}/ios/simulator
+
+      - name: Create XCFramework
+        run: |
+          xcodebuild -create-xcframework \
+            -library ${{ runner.temp }}/ios/device/lib/libcurl-impersonate.a \
+            -headers ${{ runner.temp }}/ios/device/include \
+            -library ${{ runner.temp }}/ios/simulator/lib/libcurl-impersonate.a \
+            -headers ${{ runner.temp }}/ios/simulator/include \
+            -output ${{ runner.temp }}/libcurl-impersonate.xcframework
+
+          cd ${{ runner.temp }}
+          if [[ "${{ startsWith(github.ref, 'refs/tags/') }}" == "true" ]]; then
+            tar -c -z -f ${{ runner.temp }}/libcurl-impersonate-${{ github.ref_name }}.ios-xcframework.tar.gz libcurl-impersonate.xcframework
+          else
+            tar -c -z -f ${{ runner.temp }}/libcurl-impersonate.ios-xcframework.tar.gz libcurl-impersonate.xcframework
+          fi
+          echo "release_file_xcframework=${{ runner.temp }}/libcurl-impersonate-${{ github.ref_name }}.ios-xcframework.tar.gz" >> $GITHUB_ENV
+
+      - name: Upload XCFramework artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts.ios-xcframework
+          path: ${{ runner.temp }}/libcurl-impersonate*.ios-xcframework.tar.gz
+
+      - name: Upload XCFramework release file
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            ${{ env.release_file_xcframework }}

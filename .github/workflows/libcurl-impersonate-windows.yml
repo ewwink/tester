@@ -11,6 +11,8 @@ env:
   NGHTTP2_COMMIT: 8f44147c385fb1ed93a6f39911eeb30279bfd2dd
   NGHTTP3_TAG: v1.15.0
   NGTCP2_TAG: v1.20.0
+  C_ARES_TAG: v1.34.6
+  
 jobs:
   build-windows:
     name: Build windows binaries
@@ -57,26 +59,14 @@ jobs:
             exit 1
           fi
           
-      - name: Patch win/build.bat to enable c-ares
+      - name: Replace win/build.bat and win/deps.sh
         shell: pwsh
         run: |
           # Gunakan Get-Location untuk melihat direktori aktif saat ini
           Get-Location 
           
-          $filePath = "win/build.bat" # Langsung ke folder win
-          if (Test-Path $filePath) {
-              $content = Get-Content $filePath -Raw
-              $content = $content -replace "-DUSE_WIN32_IDN=ON\^`r?`n", ""
-              $content = $content -replace "-DENABLE_IPV6=ON", "-DENABLE_IPV6=OFF"
-              $content = $content -replace "(-DENABLE_IPV6=OFF\^`r?`n)", "`$1-DENABLE_ARES=ON^`r`n-DCURL_DISABLE_NTLM=ON^`r`n"
-              $content | Set-Content $filePath
-              Write-Output "Patch selesai: c-ares ditambahkan ke $filePath"
-          } else {
-              Write-Error "File $filePath tidak ditemukan di: $((Get-Location).Path)"
-              # Tampilkan daftar file untuk debug jika gagal
-              Get-ChildItem -Recurse -Filter "build.bat"
-              exit 1
-          }
+          Copy-Item curl-impersonate/build.bat win/build.bat -Force
+          Copy-Item curl-impersonate/deps.sh win/deps.sh -Force
           
       # - name: Setup tmate session for debugging
       # uses: mxschmitt/action-tmate@v3
