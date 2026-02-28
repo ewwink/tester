@@ -64,9 +64,10 @@ jobs:
         run: |
           git clone --branch v1.34.6 https://github.com/c-ares/c-ares.git
           cd c-ares
+          autoreconf -fi
           ./configure --prefix=${{ runner.temp }}/cares-install \
                       --enable-static --disable-shared \
-                      --host=${{ matrix.host }}   # kalau cross-compile
+                      --host=${{ matrix.host }}
           make -j$(nproc)
           make install
           cd ..
